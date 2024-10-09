@@ -1,8 +1,13 @@
-# React + Vite
+# SolveSpace: Where Curiosity Meets Expertise
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a project for the students who are always inquisitive.
+Students will post their question and other users who are well versed in that topic will answer that question.
+This is the idea for this amazing project.
 
-Currently, two official plugins are available:
+This is the SPL-3 project of our team.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Team members:
+  1. Zahin Abdullah Rakin [BSSE-1447]
+  2. Nazmus Shakib [BSSE-1452]
+- Team supervisor:
+  Dr. B M Mainul Hossain [Director-IIT-DU]
