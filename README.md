@@ -11,3 +11,10 @@ This is the SPL-3 project of our team.
   2. Nazmus Shakib [BSSE-1452]
 - Team supervisor:
   Dr. B M Mainul Hossain [Director-IIT-DU]
+
+# Skills
+
+1. HTML + CSS: [youtube.com](https://youtu.be/G3e-cpL7ofc?si=issMhhUu2bKMS0aQ)
+2. JavaScript: [youtube.com](https://youtu.be/EerdGm-ehJQ?si=eOxgWxrfhdZ5scFJ)
+3. react: [youtube.com](https://youtu.be/CgkZ7MvWUAA?si=lqtzoQiRPF1deBII)
+4. [react-router](https://reactrouter.com/en/main/start/tutorial)
