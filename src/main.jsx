@@ -16,11 +16,14 @@ const router = createBrowserRouter([
     path: "/",
     element: <Home/>,
     errorElement: <ErrorPage/>,
-  }
-]);
+  },
+], {
+  basename: "/SolveSpace",
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RouterProvider router={router}/>
+    <RouterProvider router={router} />
+    {/* <Home /> */}
   </StrictMode>,
 )
