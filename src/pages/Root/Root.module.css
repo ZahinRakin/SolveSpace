@@ -1,7 +1,70 @@
 .container {
+  display: grid;
+  grid-template-columns: auto 1fr;
   grid-template-areas:
     "header header"
-    "sidebar main"
+    "sidebar details"
   ;
-  min-height: 100vh;
+}
+
+/*header css*/
+.header{
+  height: var(--header-height);
+  grid-area: header;
+  background-color: rebeccapurple;
+
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+
+  padding: 0 var(--side-padding);
+
+  input {
+    flex: 1;
+    flex-grow: 1;
+    max-width: var(--inpt-max-width);
+    min-width: var(--inpt-min-width);
+
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: none;
+    outline-color: red;
+    caret-color: var(--caret-color);
+    font-size: 1rem;
+  }
+}
+.start-part {
+  margin-right: auto;
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  width: calc(var(--sidebar-width) - var(--side-padding));
+  gap: 2rem;
+}
+.header-logo {
+  height: var(--logo-height);
+}
+.notifications-count {
+  position: absolute;
+  color: var(--notice-cnt-clr);
+}
+
+/*sidebar css*/
+.sidebar {
+  min-height: calc(var(--vh) - var(--header-height));
+  width: var(--sidebar-width);
+  grid-area: sidebar;
+  background-color: bisque;
+  transition: .3s ease;
+  text-wrap: nowrap;
+}
+.hidden {
+  width: 0;
+  overflow: hidden;
+}
+
+/*details css*/
+.details{
+  grid-area: details;
+  overflow-y: auto;
 }
