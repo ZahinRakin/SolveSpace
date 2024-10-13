@@ -1,0 +1,7 @@
+.container {
+  grid-template-areas:
+    "header header"
+    "sidebar main"
+  ;
+  min-height: 100vh;
+}
