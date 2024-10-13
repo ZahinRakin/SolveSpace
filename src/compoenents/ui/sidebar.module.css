@@ -1,0 +1,14 @@
+.sidebar {
+  min-height: calc(var(--vh) - var(--header-height));
+  width: var(--sidebar-width);
+  grid-area: sidebar;
+  transition: .3s ease;
+  text-wrap: nowrap;
+
+  box-shadow: 1px 0 0 black;
+}
+
+.hidden {
+  width: 0;
+  overflow: hidden;
+}

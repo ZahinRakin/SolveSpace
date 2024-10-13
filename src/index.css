@@ -10,11 +10,19 @@ input {
   padding: 0;
 }
 
+hr {
+  border: none;
+  height: 2px;
+  background-color: black;
+  width: 100%;
+  margin: 10px 0;
+}
+
 :root {
-  --header-height: 10rem;
+  --header-height: 4rem;
   --sidebar-width: 20rem;
-  --side-padding: 3rem;
-  --logo-height: 50px;
+  --side-padding: 1rem;
+  --logo-height: 30px;
   --svg-height: 30px;
   --bg-clr-btn-dark:rgba(0, 0, 0, 0.15);
   --vh: 100vh;

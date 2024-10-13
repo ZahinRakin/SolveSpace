@@ -1,0 +1,64 @@
+/*header css*/
+.header {
+  height: var(--header-height);
+  grid-area: header;
+
+  box-shadow: 0 1px 0 black; 
+
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+
+  padding: 0 var(--side-padding);
+
+  input {
+    flex: 1;
+    flex-grow: 1;
+    max-width: var(--inpt-max-width);
+    min-width: var(--inpt-min-width);
+
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: 1px solid black;
+    outline-color: red;
+    caret-color: var(--caret-color);
+    font-size: 1rem;
+  }
+}
+
+.hamburger-icon {
+  display: none;
+}
+
+.start-part {
+  margin-right: auto;
+
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+  width: calc(var(--sidebar-width) - var(--side-padding));
+  gap: 2rem;
+}
+
+.header-logo {
+  height: var(--logo-height);
+}
+
+.notifications-count {
+  position: absolute;
+  color: var(--notice-cnt-clr);
+  font-weight: bold;
+  font-size: .8rem;
+}
+
+@media (width > 500px) and (width <= 768px){
+  .hamburger-icon {
+    display: block;
+  }
+}
+
+@media (width <= 500px) {
+  .hamburger-icon {
+    display: block;
+  }
+}
