@@ -1,10 +1,8 @@
 /*header css*/
 .header {
-  height: var(--header-height);
-  grid-area: header;
-
-  box-shadow: 0 1px 0 black; 
-
+  height: 100%;
+  max-width: var(--tolerable-width);
+  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 3rem;
@@ -28,20 +26,6 @@
 
 .hamburger-icon {
   display: none;
-}
-
-.start-part {
-  margin-right: auto;
-
-  display: grid;
-  align-items: center;
-  grid-template-columns: auto 1fr;
-  width: calc(var(--sidebar-width) - var(--side-padding));
-  gap: 2rem;
-}
-
-.header-logo {
-  height: var(--logo-height);
 }
 
 .notifications-count {

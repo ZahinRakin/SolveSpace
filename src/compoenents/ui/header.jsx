@@ -1,31 +1,27 @@
 import styles from './header.module.css';
-import sidebarStyles from './sidebar.module.css'
+import commonStyles from './sidebar-header.module.css';
+import toggleSidebar from '../toggleSidebar';
 
 import { RxHamburgerMenu } from "react-icons/rx";
 import redHandLogo from "../../../public/svg/just-hand-red.svg";
-// import blackHandLogo from "../../../public/svg/just-hand-black.svg";
-// import whiteHandLogo from "../../../public/svg/just-hand-white.svg";
+
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { LuUser } from "react-icons/lu";
 
 
 export default function Header({sidebarRef}){
-  function toggleSidebar(){
-    const sidebarElem = sidebarRef.current;
-    sidebarElem.classList.toggle(sidebarStyles.hidden);
-  }
 
   return(
     <header className={`${styles.header}`}>
-        <div className={`${styles[`start-part`]}`}>
-          <button onClick={toggleSidebar} className={`button ${styles[`hamburger-icon`]}`}>
+        <div className={`${commonStyles[`logo-holder`]}`}>
+          <button onClick={() => toggleSidebar(sidebarRef)} className={`button ${styles[`hamburger-icon`]}`}>
             <RxHamburgerMenu/>
             <div className="tooltip">
               menu
             </div>
           </button>
-          <div className="logo">
-            <img src={redHandLogo} alt="logo" className={styles["header-logo"]}/>
+          <div>
+            <img src={redHandLogo} alt="logo" className={commonStyles["logo"]}/>
           </div>
         </div>
         <input type="text" placeholder='Search bar' />

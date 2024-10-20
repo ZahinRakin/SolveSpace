@@ -12,12 +12,11 @@ export default function Root(){
 
   return (
     <div className={`${styles.container}`}>
-
-      <Header sidebarRef={sidebarRef}/>
-
-      <Sidebar sidebarRef={sidebarRef}/>
-
-      <Outlet />
+      <div className={`${styles[`header-holder`]}`}>
+        <Header sidebarRef={sidebarRef}/>
+      </div>
+      <Sidebar sidebarRef={sidebarRef} className={styles.sidebar}/>
+      <Outlet className={styles.outlet}/>
     </div>
   );
 }

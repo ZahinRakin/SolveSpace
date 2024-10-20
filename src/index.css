@@ -32,6 +32,7 @@ hr {
   --inpt-min-width: 10rem;
   --btn-padding: 12px;
   --notice-cnt-clr: red; /*notification counter color*/
+  --tolerable-width: 1200px;
 }
 
 
