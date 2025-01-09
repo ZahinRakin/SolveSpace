@@ -1,4 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
+import Layout from "./pages/Layout"
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -8,23 +10,23 @@ import ErrorPage from "./pages/ErrorPage";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />, // Root Landing Page
+    element: <Layout />,
     errorElement: <ErrorPage />,
-    children: [
-      {
-        path: "login", // Login Page
-        element: <LoginPage />,
+    children: [{
+      index: true,
+      element: <LandingPage />,
       },
-      {
-        path: "forgot-password", // Forgot Password Page
-        element: <ForgotPasswordPage />,
-      },
-      {
-        path: "signup",
-        element: <SignUpPage/>
-      }
     ],
-  },
+  },{
+    path: "/login",
+    element: <LoginPage />
+  },{
+    path: "/signup",
+    element: <SignUpPage />
+  },{
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />
+  }
 ]);
 
 export default function App() {
