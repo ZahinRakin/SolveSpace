@@ -1,32 +1,24 @@
 import React, { useState } from "react";
 import { FaUserCircle, FaBell, FaSearch } from "react-icons/fa";
 
-export default function StudentDashboard() {
+export default function TeacherDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState([
-    "New Application: Mr. Alan Watts has applied for your Math requirement.",
-    "Batch Update: Physics - Batch B has a new schedule.",
-    "Reminder: Complete your profile to get more personalized recommendations.",
+    "New Application: John Doe has applied for your Math tuition post.",
+    "Student Enrollment: Alice has joined your Physics Batch.",
+    "Reminder: Update your availability for new students.",
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [postDetails, setPostDetails] = useState({
+  const [tuitionPostDetails, setTuitionPostDetails] = useState({
     subject: "",
     time: "",
     sessionType: "session",
   });
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchQuery);
-  };
-
-  const handlePostSubmit = () => {
-    console.log("Post Details:", postDetails);
-  };
-
-  const batches = [
-    { name: "Math Batch A", schedule: "Monday 10:00 AM" },
-    { name: "Physics Batch B", schedule: "Wednesday 2:00 PM" },
+  const students = [
+    { name: "Alice", subject: "Math" },
+    { name: "Bob", subject: "Physics" },
   ];
 
   const privateTutors = [
@@ -34,17 +26,25 @@ export default function StudentDashboard() {
     { name: "Mrs. Johnson", subject: "Physics" },
   ];
 
+  const handleSearch = () => {
+    console.log("Searching for:", searchQuery);
+  };
+
+  const handleTuitionPostSubmit = () => {
+    console.log("Tuition Post Details:", tuitionPostDetails);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white shadow-md p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Student Dashboard</h1>
+        <h1 className="text-xl font-bold text-gray-800">Teacher Dashboard</h1>
         <div className="flex-grow mx-4 max-w-2xl relative">
           <div className="flex items-center border rounded-md shadow-sm px-3 py-2 bg-gray-100">
             <FaSearch className="text-gray-500 mr-2" />
             <input
               type="text"
-              placeholder="Search for subjects or teachers..."
+              placeholder="Search for students, subjects, or tutors..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-transparent outline-none"
@@ -124,12 +124,10 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      {/* Post Requirement Section */}
+      {/* Tuition Post Section */}
       <section className="max-w-6xl mx-auto py-6 space-y-6">
         <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">
-            Post Your Requirement
-          </h2>
+          <h2 className="text-lg font-bold text-gray-700 mb-4">Create Tuition Post</h2>
           <div className="space-y-4">
             <div>
               <label
@@ -141,9 +139,9 @@ export default function StudentDashboard() {
               <input
                 type="text"
                 id="subject"
-                value={postDetails.subject}
+                value={tuitionPostDetails.subject}
                 onChange={(e) =>
-                  setPostDetails({ ...postDetails, subject: e.target.value })
+                  setTuitionPostDetails({ ...tuitionPostDetails, subject: e.target.value })
                 }
                 className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
@@ -158,9 +156,9 @@ export default function StudentDashboard() {
               <input
                 type="text"
                 id="time"
-                value={postDetails.time}
+                value={tuitionPostDetails.time}
                 onChange={(e) =>
-                  setPostDetails({ ...postDetails, time: e.target.value })
+                  setTuitionPostDetails({ ...tuitionPostDetails, time: e.target.value })
                 }
                 className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
@@ -170,9 +168,9 @@ export default function StudentDashboard() {
                 Session Type
               </label>
               <select
-                value={postDetails.sessionType}
+                value={tuitionPostDetails.sessionType}
                 onChange={(e) =>
-                  setPostDetails({ ...postDetails, sessionType: e.target.value })
+                  setTuitionPostDetails({ ...tuitionPostDetails, sessionType: e.target.value })
                 }
                 className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               >
@@ -182,24 +180,24 @@ export default function StudentDashboard() {
             </div>
           </div>
           <button
-            onClick={handlePostSubmit}
+            onClick={handleTuitionPostSubmit}
             className="mt-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
           >
-            Post
+            Post Tuition
           </button>
         </div>
 
-        {/* Batches Section */}
+        {/* Students Interested Section */}
         <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">Batches</h2>
+          <h2 className="text-lg font-bold text-gray-700 mb-4">Interested Students</h2>
           <ul className="space-y-2">
-            {batches.map((batch, index) => (
+            {students.map((student, index) => (
               <li
                 key={index}
                 className="p-4 bg-gray-50 rounded-md shadow-sm flex justify-between"
               >
-                <span>{batch.name}</span>
-                <span className="text-gray-500">{batch.schedule}</span>
+                <span>{student.name}</span>
+                <span className="text-gray-500">{student.subject}</span>
               </li>
             ))}
           </ul>
@@ -208,7 +206,7 @@ export default function StudentDashboard() {
         {/* Private Tutors Section */}
         <div className="bg-white shadow-md p-6 rounded-md">
           <h2 className="text-lg font-bold text-gray-700 mb-4">
-            Private Tutors
+            Private Tutor Sessions
           </h2>
           <ul className="space-y-2">
             {privateTutors.map((tutor, index) => (
