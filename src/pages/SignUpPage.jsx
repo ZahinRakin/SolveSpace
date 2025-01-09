@@ -7,6 +7,7 @@ export default function SignUpPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    roles: [], // Array to store selected roles
   });
   const [error, setError] = useState("");
 
@@ -15,12 +16,34 @@ export default function SignUpPage() {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleRoleChange = (e) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      // Add role to the array
+      setFormData((prevData) => ({
+        ...prevData,
+        roles: [...prevData.roles, value],
+      }));
+    } else {
+      // Remove role from the array
+      setFormData((prevData) => ({
+        ...prevData,
+        roles: prevData.roles.filter((role) => role !== value),
+      }));
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     // Simple password match validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match!");
+      return;
+    }
+
+    if (formData.roles.length === 0) {
+      setError("Please select at least one role.");
       return;
     }
 
@@ -119,6 +142,38 @@ export default function SignUpPage() {
             />
           </div>
 
+          {/* Role*/}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 text-center">
+              Select Your Role(s)
+            </label>
+            <div className="mt-4 flex flex-col items-center space-y-3">
+              {/* Student Role */}
+              <label className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  value="student"
+                  checked={formData.roles.includes("student")}
+                  onChange={handleRoleChange}
+                  className="form-checkbox"
+                />
+                <span className="ml-2">Student</span>
+              </label>
+
+              {/* Teacher Role */}
+              <label className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  value="teacher"
+                  checked={formData.roles.includes("teacher")}
+                  onChange={handleRoleChange}
+                  className="form-checkbox"
+                />
+                <span className="ml-2">Teacher</span>
+              </label>
+            </div>
+          </div>
+          
           {/* Submit Button */}
           <div>
             <button
@@ -138,4 +193,4 @@ export default function SignUpPage() {
       </div>
     </div>
   );
-};
+}
