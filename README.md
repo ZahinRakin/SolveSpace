@@ -10,7 +10,7 @@ This is the SPL-3 project of our team.
   1. Zahin Abdullah Rakin [BSSE-1447]
   2. Nazmus Shakib [BSSE-1452]
 - Team supervisor:
-  Dr. B M Mainul Hossain [Director-IIT-DU]
+  Professor Dr. B M Mainul Hossain [Director-IIT-DU]
 
 # Skills
 
@@ -18,3 +18,5 @@ This is the SPL-3 project of our team.
 2. JavaScript: [youtube.com](https://youtu.be/EerdGm-ehJQ?si=eOxgWxrfhdZ5scFJ)
 3. react: [youtube.com](https://youtu.be/CgkZ7MvWUAA?si=lqtzoQiRPF1deBII)
 4. [react-router](https://reactrouter.com/en/main/start/tutorial)
+5. express for backend
+6. tailwind css
