@@ -21,7 +21,9 @@ const errorHandler = (err, req, res, next) => {
     ...(process.env.NODE_ENV === "development" ? { stack: error.stack } : {})
   }
 
-  return res.status(error.statusCode).json(response);
+  res
+    .status(error.statusCode)
+    .json(response);
 }
 
 export { errorHandler }
