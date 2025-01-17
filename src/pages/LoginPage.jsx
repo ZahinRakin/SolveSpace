@@ -13,7 +13,15 @@ export default function LoginPage() {
     e.preventDefault();
     // Mock login process
     console.log("Logging in with:", formData);
-    // Add login logic here
+    const formdata = JSON.stringify(formData);
+    //sending data to the backend
+    fetch('http://localhost:5000/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: formdata,
+    })
   };
 
   return (
