@@ -9,11 +9,7 @@ import { transporter } from "../constants.js";
 
 const forgetPassword = asyncHandler(async (req, res) => {
 
-  const { email } = req.body.trim();
-  
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
-  }
+  const email = req.body.email;
 
   const user = await User.findOne({ email });
   
@@ -25,7 +21,7 @@ const forgetPassword = asyncHandler(async (req, res) => {
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL}/verify-reset-token?token=${resetToken}`;
     
     await transporter.sendMail({
       to: email,
@@ -63,7 +59,7 @@ const resetPassword = asyncHandler( async (req, res) => {
 
   const { token, newPassword } = req.body;
 
-  if (!token || !newPassword) {
+  if (!token) { //this also can be transferred to the password validation middleware. do that later.
     return res.status(400).json({ error: 'Token and new password are required' });
   }
 

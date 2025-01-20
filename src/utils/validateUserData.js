@@ -129,7 +129,6 @@ function checkEmailFormat(email) {
   const schema = Joi.string()
     .trim()
     .email({ tlds: { allow: true } })
-    .required()
     .max(255)
     .pattern(
       /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -150,10 +149,33 @@ function checkEmailFormat(email) {
   return value;
 }
 
+function checkPasswordFormat(password){
+  const schema = Joi.string()
+      .min(8)
+      .max(128)
+      .pattern(/(?=.*[a-z])/, 'lowercase')
+      .pattern(/(?=.*[A-Z])/, 'uppercase')
+      .pattern(/(?=.*\d)/, 'number')
+      .pattern(/(?=.*[!@#$%^&*])/, 'special character')
+      .messages({
+        'string.empty': 'Password is required',
+        'string.min': 'Password must be at least 8 characters long',
+        'string.max': 'Password cannot exceed 128 characters',
+        'string.pattern.name': 'Password must contain at least one {#name}',
+      });
+  const {error, value} = schema.validate(password, { abortEarly: false });
+  if(error){
+    throw new Error(error.details[0].message);
+  }
+
+  return value;
+}
+
 
 
 export { 
   validateRegistrationData, 
   validateLoginData, 
-  checkEmailFormat
+  checkEmailFormat,
+  checkPasswordFormat
 };
