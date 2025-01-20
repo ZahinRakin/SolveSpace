@@ -58,11 +58,11 @@ const userSchema = new Schema({
   }
 },{timestamps: true});
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next) { //this supposed to hash my password. but i can see  password in the databased not hashed
 
   if(!this.isModified("password")) return next();
 
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
 
   next();
 })

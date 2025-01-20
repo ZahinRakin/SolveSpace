@@ -1,7 +1,7 @@
-import validateUserData from "../utils/validateUserData.js";
+import { validateRegistrationData, validateLoginData, checkEmailFormat } from "../utils/validateUserData.js";
 
-const validateRegistration = (req, res, next) => {
-  const { errors, sanitizedData } = validateUserData(req.body);
+function validateRegistration (req, res, next) {
+  const { errors, sanitizedData } = validateRegistrationData(req.body);
   
   if (errors) {
     return res.status(400).json({
@@ -11,9 +11,37 @@ const validateRegistration = (req, res, next) => {
     });
   }
 
-  // Attach sanitized data to request object
   req.sanitizedData = sanitizedData;
   next();
 };
 
-export default validateRegistration;
+function validateLogin (req, res, next) {
+  const { errors, sanitizedData } = validateLoginData(req.body);
+
+  if (errors) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors
+    });
+  }
+
+  req.sanitizedData = sanitizedData;
+  next();
+}
+
+function validateEmail(req, res, next) {
+  try {
+    const userEmail = checkEmailFormat(req.body.email);
+    req.body.email = userEmail;
+    next();
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export { 
+  validateRegistration, 
+  validateLogin, 
+  validateEmail
+};

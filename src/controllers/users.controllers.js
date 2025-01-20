@@ -1,7 +1,11 @@
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+
+import User from "../models/users.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -41,23 +45,21 @@ const registerUser = asyncHandler(async (req, res) => {
     .json( new ApiResponse(201, newUser.username, "Registration successful.") );
 });
 
-
-
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password, rememberMe } = req.sanitizedData;
 
-  if (!email || !password) {
+  if (!username || !password) {
     throw new ApiError(400, "Email and password are required");
   }
 
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await User.findOne({ username });
   if (!user) {
-    throw new ApiError(401, "Invalid email or password");
+    throw new ApiError(401, "Invalid username");
   }
 
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) {
-    throw new ApiError(401, "Invalid email or password");
+    throw new ApiError(401, "Invalid password");
   }
 
   const accessToken = user.generateAccessToken();
@@ -65,30 +67,115 @@ const loginUser = asyncHandler(async (req, res) => {
 
   user.refreshToken = refreshToken;
   await user.save();
-  res.status(200).json(new ApiResponse(200, user.username, "Login successful."));
+
+  //sending the access token and refreshtoken through cookies with httpOnly request.
+  let maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  if (rememberMe) {
+    maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+  }
+  res
+    .cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+        maxAge: maxAge
+      })
+    .setHeader('Authorization', `Bearer ${accessToken}`)
+    .status(200)
+    .json(new ApiResponse(200, user.username, "Login successful."));
 });
 
 //this needs to be re-evaluated.
-const logoutUser = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
+async function generateAccessAndRefreshToken(userId) {
+  try {
+    const user = await User.findById(userId)
+    //small check for user existence
 
-  if (!refreshToken) {
-    throw new ApiError(400, "Refresh token is required");
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave: false}); //validateBeforeSave ?
+    return {accessToken, refreshToken};
+
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while generating access and refresh tokens.");
+  }
+}
+
+const refreshAccessToken = asyncHandler( async (req, res) => {
+  const incomingRefreshToken = req.cookies.refreshtoken || req.body.refreshToken;
+  if(!incomingRefreshToken){
+    throw new ApiError(401, "Refresh token is required.");
   }
 
-  const user = await User.findOne({ refreshToken });
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+    const user = await User.findById(decodedToken?._id);
+    if(!user){
+      throw new ApiError(401, "Invalid refresh token");
+    }
 
-  if (!user) {
-    throw new ApiError(401, "Invalid refresh token");
+    if (incomingRefreshToken !== user?.refreshToken){
+      throw new ApiError(401, "Invalid refresh token")
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production"
+    }
+
+    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+
+    res
+      .status(200)
+      .cookie("accesstoken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json( new ApiResponse(
+        200, 
+        {
+          accessToken,
+          refreshToken: newRefreshToken
+        }, 
+        "Access token refreshed successfully."
+      ));
+
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while refreshing access token.")
   }
+})
 
-  user.refreshToken = null;
-  await user.save();
+const logoutUser = asyncHandler( async (req, res) => {
+  const user = req.user;
+  await User.findByIdAndUpdate(
+    user._id,
+    {
+      $unset: { refreshToken: "" },
+    },
+    { new: true }
+  );
 
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production"
+  }
   res
     .status(200)
-    .json(new ApiResponse(200, null, "Logout successful"));
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json( new ApiResponse(200, {}, "User logged out successfully"));
 });
 
 
-export { registerUser, loginUser, logoutUser };
+module.exports = router;
+
+export { 
+  registerUser, 
+  loginUser, 
+  logoutUser,
+  refreshAccessToken
+};

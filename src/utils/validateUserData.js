@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-export const validateUserData = (userData) => {
+function validateRegistrationData(userData) {
   const schema = Joi.object({
     firstname: Joi.string()
       .trim()
@@ -39,6 +39,7 @@ export const validateUserData = (userData) => {
       .required()
       .email()
       .max(255)
+      .pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,"email")
       .messages({
         'string.empty': 'Email is required',
         'string.email': 'Invalid email format',
@@ -81,4 +82,78 @@ export const validateUserData = (userData) => {
   return { errors: null, sanitizedData: value };
 };
 
-export default validateUserData;
+function validateLoginData(userData){
+  const schema = Joi.object({
+    username: Joi.string()
+      .trim()
+      .required()
+      .min(3)
+      .max(30)
+      .pattern(/^[a-zA-Z0-9_-]+$/)
+      .messages({
+        'string.empty': 'Username is required',
+        'string.min': 'Username must be at least 3 characters long',
+        'string.max': 'Username cannot exceed 30 characters',
+        'string.pattern.base': 'Username can only contain letters, numbers, underscores, and hyphens',
+      }),
+      password: Joi.string()
+      .required()
+      .min(8)
+      .max(128)
+      .pattern(/(?=.*[a-z])/, 'lowercase')
+      .pattern(/(?=.*[A-Z])/, 'uppercase')
+      .pattern(/(?=.*\d)/, 'number')
+      .pattern(/(?=.*[!@#$%^&*])/, 'special character')
+      .messages({
+        'string.empty': 'Password is required',
+        'string.min': 'Password must be at least 8 characters long',
+        'string.max': 'Password cannot exceed 128 characters',
+        'string.pattern.name': 'Password must contain at least one {#name}',
+      }),
+      rememberMe: Joi.boolean().optional()
+  });
+  const { error, value } = schema.validate(userData, { abortEarly: false });
+
+  if (error) {
+    const errors = error.details.reduce((acc, detail) => {
+      acc[detail.context.key] = detail.message;
+      return acc;
+    }, {});
+    return { errors, sanitizedData: null };
+  }
+  console.log("validate login data: ", value);
+  return { errors: null, sanitizedData: value };
+}
+
+function checkEmailFormat(email) {
+  const schema = Joi.string()
+    .trim()
+    .email({ tlds: { allow: true } })
+    .required()
+    .max(255)
+    .pattern(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      "email"
+    )
+    .messages({
+      "string.empty": "Email is required",
+      "string.email": "Invalid email format",
+      "string.pattern.name": "Email must be a valid format (e.g., example@domain.com)",
+    });
+
+  const { error, value } = schema.validate(email, { abortEarly: false });
+
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+
+  return value;
+}
+
+
+
+export { 
+  validateRegistrationData, 
+  validateLoginData, 
+  checkEmailFormat
+};
