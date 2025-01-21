@@ -1,8 +1,8 @@
 import User from "../models/users.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
 import { ApiError } from "../utils/ApiError.js";
+import jwt from "jsonwebtoken";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email, password, role } = req.sanitizedData;
@@ -99,10 +99,14 @@ async function generateAccessAndRefreshToken(userId) {
   }
 }
 
-const refreshAccessToken = asyncHandler( async (req, res) => {
-  const incomingRefreshToken = req.cookies.refreshtoken || req.body.refreshToken;
-  if(!incomingRefreshToken){
-    throw new ApiError(401, "Refresh token is required.");
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken ||
+    req.body.refreshToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+  
+  if (!incomingRefreshToken || typeof incomingRefreshToken !== "string") {
+    throw new ApiError(400, "Invalid or missing refresh token.");
   }
 
   try {
@@ -110,39 +114,34 @@ const refreshAccessToken = asyncHandler( async (req, res) => {
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
+
     const user = await User.findById(decodedToken?._id);
-    if(!user){
-      throw new ApiError(401, "Invalid refresh token");
+
+    if (!user || incomingRefreshToken !== user.refreshToken) {
+      throw new ApiError(401, "Invalid or mismatched refresh token.");
     }
 
-    if (incomingRefreshToken !== user?.refreshToken){
-      throw new ApiError(401, "Invalid refresh token")
-    }
+    const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(
+      user._id
+    );
 
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production"
-    }
-
-    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id);
-
-    res
-      .status(200)
-      .cookie("accesstoken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
-      .json( new ApiResponse(
-        200, 
-        {
-          accessToken,
-          refreshToken: newRefreshToken
-        }, 
-        "Access token refreshed successfully."
-      ));
-
+    res.status(200).json({
+      accessToken,
+      refreshToken: newRefreshToken,
+      message: "Token refreshed successfully.",
+    });
   } catch (error) {
-    throw new ApiError(500, "Something went wrong while refreshing access token.")
+    console.error("Error during token verification:", error);
+
+    if (error.name === "JsonWebTokenError") {
+      throw new ApiError(401, "Malformed or invalid token.");
+    } else if (error.name === "TokenExpiredError") {
+      throw new ApiError(401, "Token expired.");
+    } else {
+      throw new ApiError(500, "Server error while refreshing token.");
+    }
   }
-})
+});
 
 const logoutUser = asyncHandler( async (req, res) => {
   const user = req.user;
@@ -168,7 +167,7 @@ const logoutUser = asyncHandler( async (req, res) => {
 
 const deleteAccount = asyncHandler(async (req, res) => {
   const userId = req.user._id; 
-  
+
   const user = await User.findByIdAndDelete(userId);
 
   if (!user) {
