@@ -1,7 +1,3 @@
-const crypto = require('crypto');
-const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
-
 import User from "../models/users.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -170,12 +166,24 @@ const logoutUser = asyncHandler( async (req, res) => {
     .json( new ApiResponse(200, {}, "User logged out successfully"));
 });
 
+const deleteAccount = asyncHandler(async (req, res) => {
+  const userId = req.user._id; 
+  
+  const user = await User.findByIdAndDelete(userId);
 
-module.exports = router;
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  res.json({ message: "Account deleted successfully" });
+});
+
+
 
 export { 
   registerUser, 
   loginUser, 
   logoutUser,
-  refreshAccessToken
+  refreshAccessToken,
+  deleteAccount
 };

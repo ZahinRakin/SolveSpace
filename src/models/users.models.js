@@ -54,11 +54,20 @@ const userSchema = new Schema({
   ],
   refreshToken: {
     type: String,
-    required: true 
+    required: true,
+  },
+  resetPasswordToken: { 
+    type: String,
+    trim: true,
+    default: null
+  },
+  resetPasswordExpires: { 
+    type: Date, 
+    default: null
   }
 },{timestamps: true});
 
-userSchema.pre("save", async function (next) { //this supposed to hash my password. but i can see  password in the databased not hashed
+userSchema.pre("save", async function (next) {
 
   if(!this.isModified("password")) return next();
 

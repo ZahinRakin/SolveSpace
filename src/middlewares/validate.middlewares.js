@@ -53,5 +53,6 @@ function validatePassword(req, res, next) {
 export { 
   validateRegistration, 
   validateLogin, 
-  validateEmail
+  validateEmail,
+  validatePassword
 };

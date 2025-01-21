@@ -2,13 +2,19 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
 import User from "../models/users.models.js";
-import asyncHandler from "../utils/asyncHandler.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { transporter } from "../constants.js";
 
-
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("Error connecting to SMTP server:", error);
+  } else {
+    console.log("SMTP server is ready to take messages:", success);
+  }
+}); //this checks whether the email is connected or not.
 
 const forgetPassword = asyncHandler(async (req, res) => {
-
   const email = req.body.email;
 
   const user = await User.findOne({ email });
@@ -21,9 +27,9 @@ const forgetPassword = asyncHandler(async (req, res) => {
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
 
-    const resetLink = `${process.env.FRONTEND_URL}/verify-reset-token?token=${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
     
-    await transporter.sendMail({
+    await transporter.sendMail({ //this one isn't working
       to: email,
       subject: 'Password Reset Request',
       html: `
@@ -40,27 +46,12 @@ const forgetPassword = asyncHandler(async (req, res) => {
   });
 });
 
-const veryfyResetToken = asyncHandler( async (req, res) => {
-  const { token } = req.params;
-
-  const user = await User.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpires: { $gt: Date.now() }
-  });
-
-  if (!user) {
-    return res.status(400).json({ error: 'Invalid or expired reset token' });
-  }
-
-  res.json({ message: 'Token is valid' });
-});
-
-const resetPassword = asyncHandler( async (req, res) => {
-
-  const { token, newPassword } = req.body;
-
-  if (!token) { //this also can be transferred to the password validation middleware. do that later.
-    return res.status(400).json({ error: 'Token and new password are required' });
+const verifyResetToken = async (token) => {
+  if (!token) {
+    throw new ApiError({
+      statusCode: 400,
+      message: "Invalid token!"
+    });
   }
 
   const user = await User.findOne({
@@ -69,26 +60,42 @@ const resetPassword = asyncHandler( async (req, res) => {
   });
 
   if (!user) {
-    return res.status(400).json({ error: 'Invalid or expired reset token' });
+    throw new ApiError({
+      statusCode: 400,
+      message: 'Invalid or expired reset token'
+    });
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  
-  user.password = hashedPassword;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
-  await user.save();
+  return user;
+};
 
-  await transporter.sendMail({
-    to: user.email,
-    subject: 'Password Reset Successful',
-    html: `
-      <p>Your password has been successfully reset.</p>
-      <p>If you didn't make this change, please contact support immediately.</p>
-    `
-  });
 
-  res.json({ message: 'Password reset successful' });
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+  const { newPassword } = req.body;
+
+  try {
+    const user = await verifyResetToken(token);
+    // i have pre mehod that hashes the password b4 saving to the db.
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: 'Password Reset Successful',
+      html: `
+        <p>Your password has been successfully reset.</p>
+        <p>If you didn't make this change, please contact support immediately.</p>
+      `,
+    });
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-export { forgetPassword, veryfyResetToken, resetPassword };
+
+export { forgetPassword, resetPassword };
