@@ -6,7 +6,6 @@ import jwt from "jsonwebtoken";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email, password, role } = req.sanitizedData;
-
   const existingUser = await User.findOne({
     $or: [{ email: email }, { username: username }]
   });
@@ -27,7 +26,7 @@ const registerUser = asyncHandler(async (req, res) => {
     username,
     email,
     password,
-    role: role || "student",
+    role,
     refreshToken
   });
 

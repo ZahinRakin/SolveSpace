@@ -75,10 +75,8 @@ function validateRegistrationData(userData) {
       acc[detail.context.key] = detail.message;
       return acc;
     }, {});
-
     return { errors, sanitizedData: null };
   }
-
   return { errors: null, sanitizedData: value };
 };
 

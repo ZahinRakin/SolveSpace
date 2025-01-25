@@ -26,16 +26,14 @@ const forgetPassword = asyncHandler(async (req, res) => {
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
-
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    
+        
     await transporter.sendMail({ //this one isn't working
       to: email,
       subject: 'Password Reset Request',
       html: `
         <p>You requested a password reset.</p>
-        <p>Click this link to reset your password:</p>
-        <a href="${resetLink}">Reset Password</a>
+        <p>Copy and paste this link in the to reset your password:</p>
+        <div>${resetToken}</div>
         <p>This link will expire in 1 hour.</p>
       `
     });
@@ -46,7 +44,33 @@ const forgetPassword = asyncHandler(async (req, res) => {
   });
 });
 
-const verifyResetToken = async (token) => {
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const user = await verifyResetToken(token);
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: 'Password Reset Successful',
+      html: `
+        <p>Your password has been successfully reset.</p>
+        <p>If you didn't make this change, please contact support immediately.</p>
+      `,
+    });
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+async function verifyResetToken(token) {
   if (!token) {
     throw new ApiError({
       statusCode: 400,
@@ -68,34 +92,6 @@ const verifyResetToken = async (token) => {
 
   return user;
 };
-
-
-const resetPassword = asyncHandler(async (req, res) => {
-  const { token } = req.query;
-  const { newPassword } = req.body;
-
-  try {
-    const user = await verifyResetToken(token);
-    // i have pre mehod that hashes the password b4 saving to the db.
-    user.password = newPassword;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
-    await user.save();
-
-    await transporter.sendMail({
-      to: user.email,
-      subject: 'Password Reset Successful',
-      html: `
-        <p>Your password has been successfully reset.</p>
-        <p>If you didn't make this change, please contact support immediately.</p>
-      `,
-    });
-
-    res.json({ message: 'Password reset successful' });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 
 export { forgetPassword, resetPassword };
