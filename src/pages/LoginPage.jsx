@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import jwt_decode from "jwt-decode";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ username: "", password: "" });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -11,17 +14,25 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Mock login process
-    console.log("Logging in with:", formData);
-    const formdata = JSON.stringify(formData);
-    //sending data to the backend
-    fetch('http://localhost:5000/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: formdata,
-    })
+
+    axios.post('/api/v1/users/login', formData) // here i changed the formData => formdata
+      .then((response) => {
+        const accessToken = response.headers['authorization'].replace('Bearer ', '');
+        localStorage.setItem('accessToken', accessToken);
+
+        const { username, email, role } = jwt_decode(accessToken);
+
+        if (role === "student"){
+          navigate('/student/dashboard');
+        } else if (role === "teacher") {
+          navigate('/teacher/dashboard');
+        } else if (role === "admin") {
+          navigate('/admin/dashboard');
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (

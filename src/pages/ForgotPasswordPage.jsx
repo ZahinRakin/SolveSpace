@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setEmail(e.target.value);
@@ -13,12 +16,16 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
 
     // Mock API call
-    console.log("Password recovery requested for:", email);
-
-    // success message
-    setMessage(
-      "If this email is registered, you'll receive a password reset link shortly."
-    );
+    axios.post('/api/v1/forget-password', {"email": email})
+      .then(_ => {
+        setMessage(
+          "If this email is registered, you'll receive a password reset link shortly."
+        );
+        navigate('/reset-password'); 
+      })
+      .catch(error => {
+        console.log(error);
+      })
   };
 
   return (

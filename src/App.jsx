@@ -6,6 +6,10 @@ import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import SignUpPage from "./pages/SignUpPage";
 import ErrorPage from "./pages/ErrorPage";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +30,18 @@ const router = createBrowserRouter([
   },{
     path: "/forgot-password",
     element: <ForgotPasswordPage />
+  },{
+    path: "/student/dashboard",
+    element: <StudentDashboard/>
+  },{
+    path: "/teacher/dashboard",
+    element: <TeacherDashboard/>
+  },{
+    path: "/admin/dashboard",
+    element: <AdminDashboard/>
+  },{
+    path: "/reset-password",
+    element: <ResetPasswordPage/>
   }
 ]);
 

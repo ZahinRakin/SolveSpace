@@ -1,49 +1,39 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function SignUpPage() {
+
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    roles: [], // Array to store selected roles
+    role: "",
   });
+
   const [error, setError] = useState("");
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleRoleChange = (e) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      // Add role to the array
-      setFormData((prevData) => ({
-        ...prevData,
-        roles: [...prevData.roles, value],
-      }));
-    } else {
-      // Remove role from the array
-      setFormData((prevData) => ({
-        ...prevData,
-        roles: prevData.roles.filter((role) => role !== value),
-      }));
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Simple password match validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match!");
       return;
     }
 
-    if (formData.roles.length === 0) {
-      setError("Please select at least one role.");
+    if (!formData.role) {
+      setError("Please select a role.");
       return;
     }
 
@@ -51,7 +41,26 @@ export default function SignUpPage() {
     setError("");
 
     // Mock API call or form submission logic
-    console.log("Signing up with:", formData);
+    // const {confirmPassword, ...neededData} = formData;
+
+    const formdata_ = {
+      "firstname": `${formData.firstname}`,
+      "lastname": `${formData.lastname}`,
+      "username": `${formData.username}`,
+      "email": `${formData.email}`,
+      "password": `${formData.password}`,
+      "role": `${formData.role}`
+    }
+    
+    axios.post('/api/v1/users/register', formdata_)
+      .then(response => {
+        if(response.status === 201){ //this is the response that will 
+          navigate('/login');
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      })
   };
 
   return (
@@ -62,6 +71,44 @@ export default function SignUpPage() {
         </h1>
         {error && <p className="text-red-500 text-center">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* firstname Field */}
+          <div>
+            <label
+              htmlFor="firstname"
+              className="block text-sm font-medium text-gray-700"
+            >
+              firstname
+            </label>
+            <input
+              type="text"
+              id="firstname"
+              name="firstname"
+              value={formData.firstname}
+              onChange={handleChange}
+              placeholder="Enter your firstname"
+              required
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          {/* lastname Field */}
+          <div>
+            <label
+              htmlFor="lastname"
+              className="block text-sm font-medium text-gray-700"
+            >
+              lastname
+            </label>
+            <input
+              type="text"
+              id="lastname"
+              name="lastname"
+              value={formData.lastname}
+              onChange={handleChange}
+              placeholder="Enter your lastname"
+              required
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
           {/* Username Field */}
           <div>
             <label
@@ -142,20 +189,21 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Role*/}
+          {/* Role Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 text-center">
-              Select Your Role(s)
+            <label className="block text-sm font-medium text-gray-700">
+              Select Your Role
             </label>
-            <div className="mt-4 flex flex-col items-center space-y-3">
+            <div className="mt-4 flex justify-center space-x-10">
               {/* Student Role */}
               <label className="inline-flex items-center">
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name="role"
                   value="student"
-                  checked={formData.roles.includes("student")}
-                  onChange={handleRoleChange}
-                  className="form-checkbox"
+                  checked={formData.role === "student"}
+                  onChange={handleChange}
+                  className="form-radio"
                 />
                 <span className="ml-2">Student</span>
               </label>
@@ -163,17 +211,19 @@ export default function SignUpPage() {
               {/* Teacher Role */}
               <label className="inline-flex items-center">
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name="role"
                   value="teacher"
-                  checked={formData.roles.includes("teacher")}
-                  onChange={handleRoleChange}
-                  className="form-checkbox"
+                  checked={formData.role === "teacher"}
+                  onChange={handleChange}
+                  className="form-radio"
                 />
                 <span className="ml-2">Teacher</span>
               </label>
             </div>
           </div>
-          
+
+
           {/* Submit Button */}
           <div>
             <button
