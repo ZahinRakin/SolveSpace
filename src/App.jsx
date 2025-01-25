@@ -10,6 +10,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import AboutUs from "./component/AboutUs";
 
 const router = createBrowserRouter([
   {
@@ -19,7 +20,10 @@ const router = createBrowserRouter([
     children: [{
       index: true,
       element: <LandingPage />,
-      },
+      },{
+        path: "about",
+        element: <AboutUs/>
+      }
     ],
   },{
     path: "/login",
@@ -42,9 +46,6 @@ const router = createBrowserRouter([
   },{
     path: "/reset-password",
     element: <ResetPasswordPage/>
-  },{
-    path: "/about",
-    element: <AboutUs/>
   }
 ]);
 

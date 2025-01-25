@@ -16,7 +16,7 @@ export default function Header() {
         <Link to="/" className="text-xl text-gray-600 hover:text-indigo-600">
           Home
         </Link>
-        <Link to="/about" className="text-xl text-gray-600 hover:text-indigo-600">
+        <Link to="about" className="text-xl text-gray-600 hover:text-indigo-600">
           About Us
         </Link>
       </nav>
