@@ -4,7 +4,7 @@ import logo from '/just-logo.png';
 
 export default function Header() {
   return (
-    <header className="flex items-center justify-between px-8 py-4 bg-gray-100">
+    <header className="flex items-center justify-between px-16 pt-14 bg-gray-100">
       {/* Left: Logo and Website Name */}
       <div className="flex items-center">
         <img src={logo} alt="Logo" className="w-10 h-10 mr-3" />

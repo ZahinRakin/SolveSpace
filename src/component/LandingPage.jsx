@@ -1,6 +1,6 @@
 import React from "react";
-import { Outlet, Link } from "react-router-dom";
-import laptopImage from '../../public/images/website-back-img.jpg'; // Import the image
+import { Link } from "react-router-dom";
+import laptopImage from '/images/website-back-img.jpg';
 
 export default function LandingPage() {
   return (
@@ -16,10 +16,10 @@ export default function LandingPage() {
 
       {/* Content container with Flexbox */}
       <div className="relative z-10 flex flex-col justify-center items-center h-full text-center">
-        <h2 className="text-5xl font-bold text-gray-800 mb-4">
+        <h2 className="text-5xl font-bold text-black mb-4">
           Welcome to SolveSpace
         </h2>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl">
+        <p className="text-xl text-black mb-8 max-w-2xl">
           SolveSpace connects students and teachers to create a seamless
           learning environment. Join us to explore scheduling, batch
           management, and much more.

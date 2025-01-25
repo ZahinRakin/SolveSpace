@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import Layout from "./pages/Layout"
-import LandingPage from "./pages/LandingPage";
+import Layout from "./component/Layout";
+import LandingPage from "./component/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import SignUpPage from "./pages/SignUpPage";
@@ -11,6 +11,9 @@ import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AboutUs from "./component/AboutUs";
+import NotificationPage from "./pages/NotificationPage";
+import TuitionPostPage from "./pages/teacher/TuitionPostPage";
+import TuitionSearchPage from "./pages/teacher/TuitionSearchPage";
 
 const router = createBrowserRouter([
   {
@@ -46,6 +49,15 @@ const router = createBrowserRouter([
   },{
     path: "/reset-password",
     element: <ResetPasswordPage/>
+  },{
+    path: "/notification",
+    element: <NotificationPage/>
+  },{
+    path: "/teacher/tuitionpost",
+    element: <TuitionPostPage/>
+  },{
+    path: "/teacher/tuitionsearch",
+    element: <TuitionSearchPage/>
   }
 ]);
 

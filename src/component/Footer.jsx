@@ -18,7 +18,7 @@ function Footer() {
       </div>
 
       {/* Bottom Section */}
-      <div className="flex justify-between items-center max-w-7xl mx-auto px-4">
+      <div className="flex justify-between items-center max-w-7xl mx-auto pb-12">
         {/* Left Side - Logo and Name */}
         <div className="flex items-center space-x-2 ml-8"> {/* Left margin of 30px */}
           <img src={logo} alt="Logo" className="h-8" />
