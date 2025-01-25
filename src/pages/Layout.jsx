@@ -1,5 +1,6 @@
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
+import Footer from "../component/Footer";
 
 export default function Layout() {
   return (
@@ -25,11 +26,7 @@ export default function Layout() {
       <Outlet />
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-6">
-        <div className="container mx-auto text-center">
-          <p>&copy; 2025 SolveSpace. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer/>
     </div>
   );
 }
