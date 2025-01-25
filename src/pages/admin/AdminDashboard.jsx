@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FaUserCircle, FaBell, FaSearch, FaUsersCog, FaClipboardList } from "react-icons/fa";
+import Logout from "../../component/Logout";
 
 export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,12 +114,11 @@ export default function AdminDashboard() {
                     </button>
                   </li>
                   <li>
-                    <button
-                      onClick={() => console.log("Logging out...")}
+                    <div
                       className="w-full text-left hover:text-indigo-600"
                     >
-                      Logout
-                    </button>
+                      <Logout/>
+                    </div>
                   </li>
                 </ul>
               </div>
