@@ -228,3 +228,4 @@
 {"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/users/login\",\"status\":\"200\",\"responseTime\":\"69.864\"}","timestamp":"2025-01-26T01:14:46.114Z"}
 {"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"GET\",\"url\":\"/api/v1/student/request?subject=physics&class=&date=&time=&perClassPay=\",\"status\":\"404\",\"responseTime\":\"1.732\"}","timestamp":"2025-01-26T01:42:59.683Z"}
 {"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/users/logout\",\"status\":\"200\",\"responseTime\":\"9.399\"}","timestamp":"2025-01-26T01:54:59.727Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/users/login\",\"status\":\"200\",\"responseTime\":\"69.156\"}","timestamp":"2025-01-26T02:10:36.239Z"}
