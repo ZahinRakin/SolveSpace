@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import bcrypt from 'bcrypt';
 
 import User from "../models/users.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
