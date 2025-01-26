@@ -3,24 +3,24 @@ import Logout from "../../component/Logout";
 import { FaUserCircle, FaBell } from "react-icons/fa";
 import { useState } from "react";
 
-function TeacherDashboardHeader() {
+function StudentDashboardHeader() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   return (
     <header className="bg-white shadow-md p-12 px-24 flex justify-between items-center">
       {/* Header Title */}
-      <h1 className="text-xl font-bold text-gray-800">Teacher Dashboard</h1>
+      <h1 className="text-xl font-bold text-gray-800">Student Dashboard</h1>
 
       {/* Navigation Menus */}
       <div className="flex space-x-6">
         <Link
-          to="/teacher/tuitionpost"
+          to="/student/tuitionrequest"
           className="text-gray-700 hover:text-indigo-600 font-medium"
         >
-          Post
+          Request
         </Link>
         <Link
-          to="/teacher/tuitionsearch"
+          to="/student/tutorsearch"
           className="text-gray-700 hover:text-indigo-600 font-medium"
         >
           Search
@@ -69,7 +69,7 @@ function TeacherDashboardHeader() {
                   <button
                     className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
                   >
-                    <Link to="/viewprofile">
+                    <Link to="/editprofile">
                       Edit Profile
                     </Link>
                   </button>
@@ -88,4 +88,4 @@ function TeacherDashboardHeader() {
   );
 }
 
-export default TeacherDashboardHeader;
+export default StudentDashboardHeader;

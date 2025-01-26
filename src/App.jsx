@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./component/Layout";
 import LandingPage from "./component/LandingPage";
 import LoginPage from "./pages/LoginPage";
+import Logout from "./component/Logout";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import SignUpPage from "./pages/SignUpPage";
 import ErrorPage from "./pages/ErrorPage";
@@ -14,6 +15,10 @@ import AboutUs from "./component/AboutUs";
 import NotificationPage from "./pages/NotificationPage";
 import TuitionPostPage from "./pages/teacher/TuitionPostPage";
 import TuitionSearchPage from "./pages/teacher/TuitionSearchPage";
+import TuitionRequestPage from "./pages/student/TuitionRequestPage";
+import TutorSearchPage from "./pages/student/TutorSearchPage";
+import ViewProfilePage from "./pages/ViewProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +36,9 @@ const router = createBrowserRouter([
   },{
     path: "/login",
     element: <LoginPage />
+  },{
+    path: "/logout",
+    element: <Logout />
   },{
     path: "/signup",
     element: <SignUpPage />
@@ -58,6 +66,18 @@ const router = createBrowserRouter([
   },{
     path: "/teacher/tuitionsearch",
     element: <TuitionSearchPage/>
+  },{
+    path: "/student/tuitionrequest",
+    element: <TuitionRequestPage/>
+  },{
+    path: "/student/tutorsearch",
+    element: <TutorSearchPage/>
+  },{
+    path: "/viewprofile",
+    element: <ViewProfilePage/>
+  },{
+    path: "/editprofile",
+    element: <EditProfilePage/>
   }
 ]);
 

@@ -1,229 +1,176 @@
-import React, { useState } from "react";
-import { FaUserCircle, FaBell, FaSearch } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import StudentDashboardHeader from "./StudentDashboardHeader"
 
-import Logout from "../../component/Logout";
-
-export default function StudentDashboard() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([
-    "New Application: Mr. Alan Watts has applied for your Math requirement.",
-    "Batch Update: Physics - Batch B has a new schedule.",
-    "Reminder: Complete your profile to get more personalized recommendations.",
+function StudentDashboard() {
+  const [availableTuition, setAvailableTuition] = useState([
+    {
+      teacherName: "Mr. X",
+      subject: "Physics",
+      time: "10:00 AM",
+      date: ["Monday", "Wednesday", "Friday"],
+      perClassPay: 300,
+    },
+    {
+      teacherName: "Mr. Y",
+      subject: "Math",
+      time: "5:00 PM",
+      date: ["Tuesday", "Thursday", "Saturday"],
+      perClassPay: 400,
+    },
   ]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [postDetails, setPostDetails] = useState({
-    subject: "",
-    time: "",
-    sessionType: "session",
-  });
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchQuery);
+  const [myClasses, setMyClasses] = useState([
+    {
+      teacherName: "Mr. hashem",
+      subject: "Chemistry",
+      time: "4:00 PM",
+      date: ["Monday", "Wednesday"],
+      duration: 90, // number of days
+    },
+    {
+      teacherName: "Mr. kashem",
+      subject: "Biology",
+      time: "2:00 PM",
+      date: ["Tuesday", "Thursday"],
+      duration: 60, // number of days
+    },
+  ]);
+
+  const handleTokenRefresh = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get("/api/v1/refresh-accesstoken", {
+        headers: { authentication: `Bearer ${accessToken}` },
+      });
+      localStorage.setItem("accessToken", response.data.newAccessToken);
+      return response.data.newAccessToken;
+    } catch (error) {
+      console.error("Error refreshing access token:", error);
+      return null;
+    }
   };
 
-  const handlePostSubmit = () => {
-    console.log("Post Details:", postDetails);
+  const fetchAvailableTuition = async () => {
+    try {
+      let accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get("/api/v1/student/available-tuition", {
+        headers: { authentication: `Bearer ${accessToken}` },
+      });
+      setAvailableTuition(response.data.tuitions);
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        const newToken = await handleTokenRefresh();
+        if (newToken) {
+          fetchAvailableTuition(); // Retry after refreshing the token
+        }
+      } else {
+        console.error("Error fetching tuition details:", error);
+      }
+    }
   };
 
-  const batches = [
-    { name: "Math Batch A", schedule: "Monday 10:00 AM" },
-    { name: "Physics Batch B", schedule: "Wednesday 2:00 PM" },
-  ];
+  const fetchMyClasses = async () => {
+    try {
+      let accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get("/api/v1/student/my-classes", {
+        headers: { authentication: `Bearer ${accessToken}` },
+      });
+      setMyClasses(response.data.classes);
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        const newToken = await handleTokenRefresh();
+        if (newToken) {
+          fetchMyClasses(); // Retry after refreshing the token
+        }
+      } else {
+        console.error("Error fetching classes:", error);
+      }
+    }
+  };
 
-  const privateTutors = [
-    { name: "Dr. Smith", subject: "Math" },
-    { name: "Mrs. Johnson", subject: "Physics" },
-  ];
+  useEffect(() => {
+    // Uncomment after APIs are ready
+    // fetchAvailableTuition();
+    // fetchMyClasses();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-md p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Student Dashboard</h1>
-        <div className="flex-grow mx-4 max-w-2xl relative">
-          <div className="flex items-center border rounded-md shadow-sm px-3 py-2 bg-gray-100">
-            <FaSearch className="text-gray-500 mr-2" />
-            <input
-              type="text"
-              placeholder="Search for subjects or teachers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent outline-none"
-            />
-            <button
-              onClick={handleSearch}
-              className="ml-2 px-4 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
-            >
-              Search
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications((prev) => !prev)}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <FaBell className="text-2xl" />
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-md p-4 z-10">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                  Notifications
-                </h3>
-                <ul className="space-y-2">
-                  {notifications.map((note, index) => (
-                    <li
-                      key={index}
-                      className="p-2 bg-gray-50 rounded-md shadow-sm"
-                    >
-                      {note}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowAccountMenu((prev) => !prev)}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <FaUserCircle className="text-2xl" />
-            </button>
-            {showAccountMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md p-4 z-10">
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => console.log("Viewing Profile...")}
-                      className="w-full text-left hover:text-indigo-600"
-                    >
-                      View Profile
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => console.log("Editing Profile...")}
-                      className="w-full text-left hover:text-indigo-600"
-                    >
-                      Edit Profile
-                    </button>
-                  </li>
-                  <li>
-                    <div
-                      className="w-full text-left hover:text-indigo-600"
-                    >
-                      <Logout/>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <StudentDashboardHeader/>
 
-      {/* Post Requirement Section */}
-      <section className="max-w-6xl mx-auto py-6 space-y-6">
-        <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">
-            Post Your Requirement
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="subject"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Subject
-              </label>
-              <input
-                type="text"
-                id="subject"
-                value={postDetails.subject}
-                onChange={(e) =>
-                  setPostDetails({ ...postDetails, subject: e.target.value })
-                }
-                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="time"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Time (Optional)
-              </label>
-              <input
-                type="text"
-                id="time"
-                value={postDetails.time}
-                onChange={(e) =>
-                  setPostDetails({ ...postDetails, time: e.target.value })
-                }
-                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Session Type
-              </label>
-              <select
-                value={postDetails.sessionType}
-                onChange={(e) =>
-                  setPostDetails({ ...postDetails, sessionType: e.target.value })
-                }
-                className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option value="session">One Session</option>
-                <option value="batch">Batch</option>
-              </select>
-            </div>
-          </div>
-          <button
-            onClick={handlePostSubmit}
-            className="mt-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
-          >
-            Post
-          </button>
-        </div>
-
-        {/* Batches Section */}
-        <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">Batches</h2>
-          <ul className="space-y-2">
-            {batches.map((batch, index) => (
+      <main className="max-w-6xl mx-auto py-6 space-y-6">
+        {/* My Classes Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">My Classes</h2>
+          <ul className="space-y-4">
+            {myClasses.map((classItem, index) => (
               <li
                 key={index}
-                className="p-4 bg-gray-50 rounded-md shadow-sm flex justify-between"
+                className="bg-white p-4 rounded-md shadow-md flex justify-between items-center"
               >
-                <span>{batch.name}</span>
-                <span className="text-gray-500">{batch.schedule}</span>
+                <div>
+                  <p>
+                    <strong>Teacher:</strong> {classItem.teacherName}
+                  </p>
+                  <p>
+                    <strong>Subject:</strong> {classItem.subject}
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {classItem.time}
+                  </p>
+                  <p>
+                    <strong>Days:</strong> {classItem.date.join(", ")}
+                  </p>
+                  <p>
+                    <strong>Duration:</strong> {classItem.duration} days
+                  </p>
+                </div>
+                <button className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                  Drop
+                </button>
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Private Tutors Section */}
-        <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">
-            Private Tutors
+        </section>
+        {/* Available Tuition Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Recommended Teachers
           </h2>
-          <ul className="space-y-2">
-            {privateTutors.map((tutor, index) => (
+          <ul className="space-y-4">
+            {availableTuition.map((tuition, index) => (
               <li
                 key={index}
-                className="p-4 bg-gray-50 rounded-md shadow-sm flex justify-between"
+                className="bg-white p-4 rounded-md shadow-md flex justify-between items-center"
               >
-                <span>{tutor.name}</span>
-                <span className="text-gray-500">{tutor.subject}</span>
+                <div>
+                  <p>
+                    <strong>Teacher:</strong> {tuition.teacherName}
+                  </p>
+                  <p>
+                    <strong>Subject:</strong> {tuition.subject}
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {tuition.time}
+                  </p>
+                  <p>
+                    <strong>Days:</strong> {tuition.date.join(", ")}
+                  </p>
+                  <p>
+                    <strong>Per Class Pay:</strong> ${tuition.perClassPay}
+                  </p>
+                </div>
+                <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                  Enroll
+                </button>
               </li>
             ))}
           </ul>
-        </div>
-      </section>
+        </section>
+      </main>
     </div>
   );
 }
+
+export default StudentDashboard;
