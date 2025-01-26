@@ -81,6 +81,42 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 //this needs to be re-evaluated.
+
+const logoutUser = asyncHandler( async (req, res) => {
+  const user = req.user;
+  await User.findByIdAndUpdate(
+    user._id,
+    {
+      $unset: { refreshToken: "" },
+    },
+    { new: true }
+  );
+  
+  
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production"
+  }
+  res
+  .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json( new ApiResponse(200, {}, "User logged out successfully"));
+  });
+
+  const deleteAccount = asyncHandler(async (req, res) => {
+    const userId = req.user._id; 
+    
+    const user = await User.findByIdAndDelete(userId);
+    
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  
+  res.json({ message: "Account deleted successfully" });
+});
+
+
 async function generateAccessAndRefreshToken(userId) {
   try {
     const user = await User.findById(userId)
@@ -141,42 +177,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
   }
 });
-
-const logoutUser = asyncHandler( async (req, res) => {
-  const user = req.user;
-  await User.findByIdAndUpdate(
-    user._id,
-    {
-      $unset: { refreshToken: "" },
-    },
-    { new: true }
-  );
-
-
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production"
-  }
-  res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json( new ApiResponse(200, {}, "User logged out successfully"));
-});
-
-const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.user._id; 
-
-  const user = await User.findByIdAndDelete(userId);
-
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
-  }
-
-  res.json({ message: "Account deleted successfully" });
-});
-
-
 
 export { 
   registerUser, 
