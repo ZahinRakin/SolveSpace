@@ -1,6 +1,6 @@
 import { validateRegistrationData, validateLoginData, checkEmailFormat, checkPasswordFormat } from "../utils/validateUserData.js";
 
-function validateRegistration (req, res, next) {
+function validateRegistration (req, res, next) {  
   const { errors, sanitizedData } = validateRegistrationData(req.body);
   
   if (errors) {
