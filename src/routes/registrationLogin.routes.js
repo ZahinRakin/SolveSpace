@@ -6,7 +6,6 @@ import {
   loginUser, 
   logoutUser, 
   refreshAccessToken, 
-  deleteAccount,
   forgetPassword,
   resetPassword
 } from "../controllers/registrationLogin.controllers.js";
@@ -29,7 +28,5 @@ router.route('/forget-password').post(validateEmail, forgetPassword);
 router.route('/reset-password').post(validatePassword, resetPassword);
 //protected routes.
 router.route("/logout").post(verifyJWT, logoutUser);
-router.route("/delete-account").delete(verifyJWT, deleteAccount); // this in users.
-
 
 export default router;

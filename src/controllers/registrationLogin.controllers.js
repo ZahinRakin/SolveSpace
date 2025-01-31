@@ -105,16 +105,6 @@ const logoutUser = asyncHandler( async (req, res) => {
     .json( new ApiResponse(200, {}, "User logged out successfully"));
   });
 
-const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.user._id; 
-  const user = await User.findByIdAndDelete(userId);
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
-  }
-  
-  res.json({ message: "Account deleted successfully" });
-});
-
 const forgetPassword = asyncHandler(async (req, res) => {
   const email = req.body.email;
 
@@ -259,7 +249,6 @@ export {
   loginUser, 
   logoutUser,
   refreshAccessToken,
-  deleteAccount,
   generateAccessAndRefreshToken,
   forgetPassword,
   resetPassword
