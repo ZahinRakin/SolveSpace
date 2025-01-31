@@ -4,6 +4,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
 
+import crypto from 'crypto';
+import { sendEmail } from "./emailService.controllers.js";
+
 const registerUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email, password, role } = req.sanitizedData;
   const existingUser = await User.findOne({
@@ -80,8 +83,6 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user.username, "Login successful."));
 });
 
-//this needs to be re-evaluated.
-
 const logoutUser = asyncHandler( async (req, res) => {
   const user = req.user;
   await User.findByIdAndUpdate(
@@ -114,6 +115,83 @@ const deleteAccount = asyncHandler(async (req, res) => {
   res.json({ message: "Account deleted successfully" });
 });
 
+const forgetPassword = asyncHandler(async (req, res) => {
+  const email = req.body.email;
+
+  const user = await User.findOne({ email });
+  
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenExpiry = Date.now() + 3600000;
+
+  let response = "";
+  
+  if (user) {
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
+
+    const body = `
+      <p>You requested a password reset.</p>
+      <p>Copy and paste this link in the to reset your password:</p>
+      <div>${resetToken}</div>
+      <p>This link will expire in 1 hour.</p>
+    `;
+    sendEmail(email,'Password Reset Request.', body);
+    response = "Password reset token has been sent to you email";
+  } else {
+    response = "There is no account with this email";
+  }
+
+  res.json({ 
+    message: response
+  });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const user = await verifyResetToken(token);
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    const email = user.email;
+    await user.save();
+
+    sendEmail(
+      email, 
+      'Password Reset Successful', 
+      `<p>Your password has been successfully reset.</p>
+      <p>If you didn't make this change, please contact support immediately.</p>`
+    ,);
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+async function verifyResetToken(token) {
+  if (!token) {
+    throw new ApiError({
+      statusCode: 400,
+      message: "Invalid token!"
+    });
+  }
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+  
+  if (!user) {
+    throw new ApiError({
+      statusCode: 400,
+      message: 'Invalid or expired reset token'
+    });
+  }
+  
+  return user;
+};
 
 async function generateAccessAndRefreshToken(userId) {
   try {
@@ -181,5 +259,8 @@ export {
   loginUser, 
   logoutUser,
   refreshAccessToken,
-  deleteAccount
+  deleteAccount,
+  generateAccessAndRefreshToken,
+  forgetPassword,
+  resetPassword
 };
