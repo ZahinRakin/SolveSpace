@@ -6,9 +6,11 @@ import morgan from 'morgan';
 import logger from './utils/logger.js';
 import { errorHandler } from './middlewares/error.middlewares.js';
 import healthCheckRouter from './routes/healthCheck.routes.js';
+
 import registrationLoginRouter from './routes/registrationLogin.routes.js';
 import usersRouter from './routes/users.routes.js';
 import notificationsRouter from './routes/notifications.routes.js';
+import ratingRouter from './routes/rating.routes.js';
 
 
 const app = express();
@@ -42,6 +44,7 @@ app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/api/v1",registrationLoginRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/notifications", notificationsRouter);
+app.use("/api/v1/rating", ratingRouter);
 
 app.use(errorHandler);
 export { app };

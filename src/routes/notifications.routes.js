@@ -6,7 +6,7 @@ const router = Router();
 
 router.route("/getnotifications").get(verifyJWT, getNotifications);
 router.route("/delete-notifications").delete(verifyJWT, deleteNotifications);
-router.route("/send-notification").post(verifyJWT, sendNotifications);
+router.route("/send-notification/:recieverId").post(verifyJWT, sendNotifications);
 
 
 export default router;

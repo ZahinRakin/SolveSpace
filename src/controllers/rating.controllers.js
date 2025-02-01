@@ -1,97 +1,108 @@
-import Rating from '../models/Rating.js';
+import Rating from '../models/rating.models.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-class RatingController {
-  static giveRating = async (req, res, next) => {
-    try {
-      const { user_id, teacher_id, rating_value, review_comment } = req.body;
-      
-      if (!user_id || !teacher_id || !rating_value) {
-        throw new ApiError(400, 'Missing required fields');
-      }
+const giveRating = asyncHandler(async (req, res) => {
+  const raterId = req.user._id;
+  const { rateeId } = req.params;
+  const { rating, review } = req.body;
 
-      const rating = new Rating({
-        user_id,
-        teacher_id,
-        rating_value,
-        review_comment
-      });
+  if (!rateeId || !rating) {
+    return res.status(400).json(new ApiError(400, "rateeId and rate are required"));
+  }
 
-      await rating.save();
-      return res.status(201).json(new ApiResponse(201, 'Rating given successfully', rating));
-    } catch (err) {
-      next(err);
-    }
-  };
+  if (rating < 1 || rating > 5) {
+    return res.status(400).json(new ApiError(400, "Rating must be between 1 and 5"));
+  }
 
-  static updateRating = async (req, res, next) => {
-    try {
-      const { rating_id } = req.params;
-      const { rating_value, review_comment } = req.body;
+  const newRating = await Rating.create({
+    raterId,
+    rateeId,
+    rating,  
+    review
+  });
 
-      const rating = await Rating.findById(rating_id);
-      if (!rating) {
-        throw new ApiError(404, 'Rating not found');
-      }
+  res
+    .status(200)
+    .json(new ApiResponse(200, newRating, "success"));
+});
 
-      rating.rating_value = rating_value || rating.rating_value;
-      rating.review_comment = review_comment || rating.review_comment;
 
-      await rating.save();
-      return res.status(200).json(new ApiResponse(200, 'Rating updated successfully', rating));
-    } catch (err) {
-      next(err);
-    }
-  };
+const updateRating = asyncHandler(async (req, res) => {
+  const { ratingId } = req.params;
+  const { rating, review } = req.body;
 
-  static deleteRating = async (req, res, next) => {
-    try {
-      const { rating_id } = req.params;
+  const ratingObj = await Rating.findById(ratingId);
+  if (!ratingObj) {
+    throw new ApiError(404, 'Rating not found');
+  }
 
-      const rating = await Rating.findById(rating_id);
-      if (!rating) {
-        throw new ApiError(404, 'Rating not found');
-      }
+  ratingObj.rating = rating || ratingObj.rating;
+  ratingObj.review = review || ratingObj.review;
 
-      await rating.remove();
-      return res.status(200).json(new ApiResponse(200, 'Rating deleted successfully'));
-    } catch (err) {
-      next(err);
-    }
-  };
+  await ratingObj.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, ratingObj, "success"));
+});
 
-  static viewRating = async (req, res, next) => {
-    try {
-      const { rating_id } = req.params;
 
-      const rating = await Rating.findById(rating_id);
-      if (!rating) {
-        throw new ApiError(404, 'Rating not found');
-      }
+const deleteRating = asyncHandler(async (req, res) => {
+  const { ratingId } = req.params;
 
-      return res.status(200).json(new ApiResponse(200, 'Rating retrieved successfully', rating));
-    } catch (err) {
-      next(err);
-    }
-  };
+  const rating = await Rating.findByIdAndDelete(ratingId);
 
-  static getAverageRating = async (req, res, next) => {
-    try {
-      const { teacher_id } = req.params;
+  if (!rating) {
+    return res.status(404).json(new ApiError(404, "Rating not found"));
+  }
 
-      const ratings = await Rating.find({ teacher_id });
-      if (!ratings.length) {
-        throw new ApiError(404, 'No ratings found for this teacher');
-      }
+  res
+    .status(200)
+    .json(new ApiResponse(200, rating, "success"));
+});
 
-      const averageRating = ratings.reduce((sum, rating) => sum + rating.rating_value, 0) / ratings.length;
-      
-      return res.status(200).json(new ApiResponse(200, 'Average rating calculated', { averageRating }));
-    } catch (err) {
-      next(err);
-    }
-  };
-}
 
-export default RatingController;
+const viewReviews = asyncHandler(async (req, res) => {
+  const { rateeId } = req.params;
+  
+  const ratings = await Rating.find({ rateeId });
+
+  if (ratings.length === 0) {
+    throw new ApiError(200, "No ratings yet!");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, ratings, "success"));
+});
+
+
+const getAverageRating = asyncHandler(async (req, res) => {
+  const { rateeId } = req.params;
+
+  const ratings = await Rating.find({ rateeId }).select("rating");
+
+  if (ratings.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { averageRating: 0 }, "No ratings yet"));
+  }
+
+  const ratingsTot = ratings.reduce((sum, r) => sum + r.rating, 0);
+  const averageRating = ratingsTot / ratings.length;
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { averageRating }, "success"));
+});
+
+
+
+export {
+  giveRating,
+  updateRating,
+  deleteRating,
+  viewReviews,
+  getAverageRating
+};

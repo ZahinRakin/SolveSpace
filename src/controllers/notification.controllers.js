@@ -5,8 +5,8 @@ import { ApiError } from "../utils/ApiError.js";
 
 const getNotifications = asyncHandler(async (req, res) => {
   try {
-    const userId = req.user._id;
-    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });
+    const recieverId = req.user._id;
+    const notifications = await Notification.find({ recieverId }).sort({ createdAt: -1 });
 
     res
       .status(200)
@@ -20,12 +20,12 @@ const getNotifications = asyncHandler(async (req, res) => {
 });
 
 const sendNotifications = asyncHandler(async (req, res) => {
+  const recieverId = req.params.recieverId; //recheck.
   const senderId = req.user._id;
-  const userId = req.body.recieverId;
   const message = req.body.message;
 
   const notifications = Notification.create({
-    userId,
+    recieverId,
     senderId,
     message
   });
@@ -39,12 +39,12 @@ const sendNotifications = asyncHandler(async (req, res) => {
 
 const deleteNotifications = asyncHandler(async (req, res) => {
   try {
-    const userId = req.user._id; 
+    const recieverId = req.user._id; 
     const notificationId = req.body.notificationId;
 
     const result = await Notification.findOneAndDelete({ 
       _id: notificationId, 
-      userId
+      recieverId
     });
 
     if (!result) {

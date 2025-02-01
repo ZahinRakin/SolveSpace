@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'; //this paginates. if possible I will add it later.
 
 const notificationSchema = new mongoose.Schema({
-  userId: {
+  recieverId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', 
     required: true,
