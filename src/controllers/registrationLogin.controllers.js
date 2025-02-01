@@ -9,9 +9,7 @@ import { sendEmail } from "./emailService.controllers.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email, password, role } = req.sanitizedData;
-  const existingUser = await User.findOne({
-    $or: [{ email: email }, { username: username }]
-  });
+  const existingUser = await User.findOne({username});
 
   if (existingUser) {
     const message =

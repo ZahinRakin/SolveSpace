@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'; //this paginates. if possible I will add it later.
 
 const notificationSchema = new mongoose.Schema({
   userId: {
@@ -11,11 +12,6 @@ const notificationSchema = new mongoose.Schema({
     ref: 'User', 
     required: false, 
   },
-  listingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Listing', 
-    required: true,
-  },
   message: {
     type: String, 
     required: true,
@@ -23,18 +19,9 @@ const notificationSchema = new mongoose.Schema({
   isRead: {
     type: Boolean, 
     default: false,
-  },
-  type: {
-    type: String,
-    enum: ['BOOKING_REQUEST', 'BOOKING_APPROVED', 'BOOKING_DECLINED', 'WISHLIST', 'GENERAL'],
-    required: true
-  },
-  timestamp: {
-    type: Date, 
-    default: Date.now,
-  },
-});
+  }
+}, {timestamps: true});
 
 const Notification = mongoose.model('Notification', notificationSchema);
 
-module.exports = Notification;
+export default Notification;

@@ -8,6 +8,7 @@ import { errorHandler } from './middlewares/error.middlewares.js';
 import healthCheckRouter from './routes/healthCheck.routes.js';
 import registrationLoginRouter from './routes/registrationLogin.routes.js';
 import usersRouter from './routes/users.routes.js';
+import notificationsRouter from './routes/notifications.routes.js';
 
 
 const app = express();
@@ -40,6 +41,7 @@ app.use(morgan(morganFormat, {
 app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/api/v1",registrationLoginRouter);
 app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/notifications", notificationsRouter);
 
 app.use(errorHandler);
 export { app };

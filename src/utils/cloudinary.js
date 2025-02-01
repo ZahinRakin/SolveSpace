@@ -22,12 +22,12 @@ async function uploadOnCloudinary(localFilePath) {
     )
     console.log("File uploaded on cloudinary. File src: " + uploadResult.url);
     // once the file is uploaded, we would like to delete it from our server.
-    fs.unlinkSync(localFilePath);
+    // fs.unlinkSync(localFilePath);
 
     return uploadResult;
       
   } catch (error) {
-    fs.unlinkSync(localFilePath);
+    // fs.unlinkSync(localFilePath);
     return null;
   }
 }
