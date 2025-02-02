@@ -9,7 +9,7 @@ const viewProfile = asyncHandler(async (req, res) => {
   try {
     const userid = req.user._id;
     const user = await User.findById(userid).select(
-      "-_id -password -posts -batches -refreshToken -resetPasswordToken -resetPasswordExpires -createdAt -updatedAt"
+      "-_id -password -posts -batches -refreshToken -resetPasswordToken -resetPasswordExpires -createdAt -updatedAt -sslczStoreId -sslczStorePassword"
     );
 
     if (!user) {
@@ -32,6 +32,8 @@ const viewProfile = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email } = req.body;
+  const sslczStoreId = req.body?.sslczStoreId; //optionally available in the teacher 
+  const sslczStorePassword = req.body?.sslczStorePassword; //optionally available in the teacher 
   const localFilePath = req.file?.path;
   console.log("local file path: ", localFilePath); //test
 
@@ -48,10 +50,12 @@ const updateProfile = asyncHandler(async (req, res) => {
       lastname,
       username,
       email,
-      ...(coverImageUrl && { coverImage: coverImageUrl }) // Update coverImage only if a new one was uploaded
+      ...(coverImageUrl && { coverImage: coverImageUrl }), // Update coverImage only if a new one was uploaded
+      sslczStoreId,
+      sslczStorePassword
     },
     { new: true, runValidators: true } // Return updated user & validate changes
-  ).select("-password -refreshToken -resetPasswordToken -resetPasswordExpires");
+  ).select("-password -refreshToken -resetPasswordToken -resetPasswordExpires -sslczStoreId -sslczStorePassword");
 
   if (!user) {
     return res

@@ -8,7 +8,7 @@ const paymentSchema = new Schema({
   },
   student_id: { 
     type: Schema.Types.ObjectId, 
-    ref: "Student", 
+    ref: "User", 
     required: true 
   },
   batch_id: {
@@ -26,12 +26,9 @@ const paymentSchema = new Schema({
   },
   payment_status: { 
     type: String, 
-    enum: ["Pending", "Completed", "Failed", "Canceled"], 
-    default: "Pending" 
   },
   payment_method: { 
     type: String, 
-    required: true 
   },
   val_id: { 
     type: String 

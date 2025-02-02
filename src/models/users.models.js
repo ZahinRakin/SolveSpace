@@ -53,6 +53,7 @@ const userSchema = new Schema({
       ref: "Batch"
     }
   ],
+  //each teacher should have store_id store_password, this will allow to reach the money to each teachers account.
   sslczStoreId: {
     type: String,
     default: null
