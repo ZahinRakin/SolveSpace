@@ -11,6 +11,7 @@ import registrationLoginRouter from './routes/registrationLogin.routes.js';
 import usersRouter from './routes/users.routes.js';
 import notificationsRouter from './routes/notifications.routes.js';
 import ratingRouter from './routes/rating.routes.js';
+import paymentRouter from './routes/payment.routes.js';
 
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/v1",registrationLoginRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/rating", ratingRouter);
+app.use("/api/v1/payment", paymentRouter);
 
 app.use(errorHandler);
 export { app };
