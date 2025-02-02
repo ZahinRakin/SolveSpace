@@ -39,7 +39,6 @@ function validateRegistrationData(userData) {
       .required()
       .email()
       .max(255)
-      .pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,"email")
       .messages({
         'string.empty': 'Email is required',
         'string.email': 'Invalid email format',
@@ -57,7 +56,10 @@ function validateRegistrationData(userData) {
         'string.empty': 'Password is required',
         'string.min': 'Password must be at least 8 characters long',
         'string.max': 'Password cannot exceed 128 characters',
-        'string.pattern.name': 'Password must contain at least one {#name}',
+        'string.pattern.lowercase': 'Password must contain at least one lowercase letter',
+        'string.pattern.uppercase': 'Password must contain at least one uppercase letter',
+        'string.pattern.digit': 'Password must contain at least one digit',
+        'string.pattern.special': 'Password must contain at least one special character',
       }),
     role: Joi.string()
       .valid('student', 'teacher')
@@ -66,7 +68,14 @@ function validateRegistrationData(userData) {
         'string.empty': 'Role is required',
         'any.only': 'Role must be either student or teacher',
       }),
+    sslczStoreId: Joi.string()
+      .trim()
+      .optional(),
+    sslczStorePassword: Joi.string()
+      .trim()
+      .optional(),
   });
+
 
   const { error, value } = schema.validate(userData, { abortEarly: false });
 

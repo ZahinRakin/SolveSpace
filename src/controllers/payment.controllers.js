@@ -9,10 +9,14 @@ import { ApiError } from '../utils/ApiError.js';
 // need: verifyJWT, totalAmount, productName, batchId, teacherId method: post
 const sslczPay = asyncHandler(async (req, res, next) => { 
   const { totalAmount, productName, batchId, teacherId } = req.body;
+  console.log(`total amount: ${totalAmount} -- productname: ${productName} -- batchId: ${batchId} -- teacherid: ${teacherId}`); //debug === reached
   const studentId = req.user._id;
+  console.log(`user: ${studentId}`); //debug === reached
 
   // Checking if student is part of the batch
   const batch = await Batch.findById(batchId).select("student_ids");
+
+  console.log(`batch: ${batch}`); //debug
 
   if (!batch) {
     return res.status(404).json(new ApiError(404, "Batch not found"));
@@ -62,10 +66,10 @@ const sslczPay = asyncHandler(async (req, res, next) => {
     await Payment.create({
       trnx_id: tranId,
       student_id: studentId,
+      teacher_id: teacherId,
       batch_id: batchId,
       amount: totalAmount,
       currency: "BDT",
-      payment_status: "PENDING",
     });
 
     if (apiResponse && apiResponse.GatewayPageURL) {
@@ -83,11 +87,19 @@ const sslczPay = asyncHandler(async (req, res, next) => {
 
 const sslczSuccess = asyncHandler(async (req, res) => {
   const { val_id, amount, status, tran_id, card_type } = req.body;
+  const payment = await Payment.findOne({ trnx_id: tran_id }).select("teacher_id");
+  if (!payment) {
+    throw new Error("Payment record not found");
+  }
+
+  const { sslczStoreId, sslczStorePassword } = await User.findById(payment.teacher_id)
+    .select("sslczStoreId sslczStorePassword")
+    .lean(); // Optional: `lean()` improves performance for read-only queries.
 
   try {
     const sslcz = new SSLCommerzPayment(
-      process.env.SSLCOMMERZ_STORE_ID, 
-      process.env.SSLCOMMERZ_STORE_PASSWORD, 
+      sslczStoreId,
+      sslczStorePassword,
       process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === "true"
     );
 
@@ -213,10 +225,19 @@ const sslczCancel = asyncHandler(async (req, res) => {
 const sslczIPN = asyncHandler(async (req, res) => {
   const { val_id, amount, status, tran_id, currency } = req.body;
 
+  const payment = await Payment.findOne({ trnx_id: tran_id }).select("teacher_id");
+  if (!payment) {
+    throw new Error("Payment record not found");
+  }
+
+  const { sslczStoreId, sslczStorePassword } = await User.findById(payment.teacher_id)
+    .select("sslczStoreId sslczStorePassword")
+    .lean(); // Optional: `lean()` improves performance for read-only queries.
+    
   const sslcz = new SSLCommerzPayment(
-    process.env.SSLCOMMERZ_STORE_ID,
-    process.env.SSLCOMMERZ_STORE_PASSWORD,
-    process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === 'true'
+    sslczStoreId,
+    sslczStorePassword,
+    process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === "true"
   );
 
   try {

@@ -9,6 +9,9 @@ import { sendEmail } from "./emailService.controllers.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email, password, role } = req.sanitizedData;
+  const sslczStoreId = req.sanitizedData?.sslczStoreId;
+  const sslczStorePassword = req.sanitizedData?.sslczStorePassword;
+
   const existingUser = await User.findOne({username});
 
   if (existingUser) {
@@ -28,6 +31,8 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     role,
+    sslczStoreId,
+    sslczStorePassword,
     refreshToken
   });
 

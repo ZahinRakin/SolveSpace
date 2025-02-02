@@ -11,6 +11,11 @@ const paymentSchema = new Schema({
     ref: "User", 
     required: true 
   },
+  teacher_id:{
+    type: Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
+  },
   batch_id: {
     type: Schema.Types.ObjectId,
     ref: "Post",
