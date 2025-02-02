@@ -13,13 +13,8 @@ const paymentSchema = new Schema({
   },
   batch_id: {
     type: Schema.Types.ObjectId,
-    refPath: "batch_model", //inquire about it when working with this payment model.
+    ref: "Post",
     required: true
-  },
-  batch_model: { 
-    type: String, 
-    required: true, 
-    enum: ["TuitionPost", "TutorRequest"] 
   },
   amount: { 
     type: Number, 

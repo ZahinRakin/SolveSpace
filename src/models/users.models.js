@@ -53,6 +53,14 @@ const userSchema = new Schema({
       ref: "Batch"
     }
   ],
+  sslczStoreId: {
+    type: String,
+    default: null
+  },
+  sslczStorePassword: {
+    type: String,
+    default: null
+  },
   refreshToken: {
     type: String,
     required: true,
