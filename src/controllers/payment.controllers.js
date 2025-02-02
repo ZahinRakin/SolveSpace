@@ -1,12 +1,16 @@
 import SSLCommerzPayment from 'sslcommerz-lts';
 import { v4 as uuidv4 } from 'uuid';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { Payment } from '../models/payment.models.js';
+import { } from "";
 
 const sslczPay = asyncHandler(async (req, res) => {
-  const {total_amount, product_name, } = req.body;
+  const {total_amount, product_name, batch_id} = req.body;
   const cus_name = `${req.user.firstname} ${req.user.lastname}`;
 
-  console.log(`total amount: ${total_amount} ---- product name: ${product_name} ---- cus_name: ${cus_name}----`);
+
+  //each teacher should have store_id store_password, this will allow to reach the money to each teachers account.
+
   const data = {
     total_amount,
     currency: 'BDT',
@@ -15,32 +19,18 @@ const sslczPay = asyncHandler(async (req, res) => {
     fail_url: process.env.SSLCOMMERZ_FAIL_URL,
     cancel_url: process.env.SSLCOMMERZ_CANCEL_URL,
     ipn_url: process.env.SSLCOMMERZ_IPN_URL,
-    shipping_method: 'Courier',
+    shipping_method: 'NO',
     product_name,
     product_category: 'Education',
-    product_profile: 'Online tuition',
+    product_profile: 'non-physical-goods',
     cus_name,
     cus_email: req.user.email,
-    // cus_add1: 'Dhaka',
-    // cus_add2: 'Dhaka',
-    // cus_city: 'Dhaka',
-    // cus_state: 'Dhaka',
-    // cus_postcode: '1000',
-    // cus_country: 'Bangladesh',
     cus_phone: '01614211335',
-    // cus_fax: '01614211335',
-    ship_name: cus_name,
-    ship_add1: 'Dhaka',
-    // ship_add2: 'Dhaka',
-    ship_city: 'Dhaka',
-    // ship_state: 'Dhaka',
-    ship_postcode: 1000,
-    ship_country: 'Bangladesh',
   };
 
   const sslcz = new SSLCommerzPayment(
-    process.env.SSLCOMMERZ_STORE_ID, 
-    process.env.SSLCOMMERZ_STORE_PASSWORD, 
+    store_id, 
+    store_password, 
     process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === 'true'
   );
 

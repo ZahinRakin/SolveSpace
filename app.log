@@ -433,3 +433,11 @@
 {"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"187.162\"}","timestamp":"2025-02-02T12:35:17.719Z"}
 {"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"124.935\"}","timestamp":"2025-02-02T12:35:34.626Z"}
 {"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"190.381\"}","timestamp":"2025-02-02T12:35:43.379Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"188.108\"}","timestamp":"2025-02-02T12:40:05.984Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"525.076\"}","timestamp":"2025-02-02T12:40:16.793Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"185.786\"}","timestamp":"2025-02-02T12:40:29.215Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"103.201\"}","timestamp":"2025-02-02T12:40:37.917Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"245.129\"}","timestamp":"2025-02-02T12:40:48.199Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"210.827\"}","timestamp":"2025-02-02T12:42:20.698Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/pay\",\"status\":\"302\",\"responseTime\":\"197.762\"}","timestamp":"2025-02-02T12:43:03.540Z"}
+{"level":"\u001b[32minfo\u001b[39m","message":"{\"method\":\"POST\",\"url\":\"/api/v1/payment/success\",\"status\":\"200\",\"responseTime\":\"387.968\"}","timestamp":"2025-02-02T12:43:23.275Z"}
