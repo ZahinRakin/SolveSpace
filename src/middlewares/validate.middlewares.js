@@ -1,4 +1,9 @@
-import { validateRegistrationData, validateLoginData, checkEmailFormat, checkPasswordFormat } from "../utils/validateUserData.js";
+import { 
+  validateRegistrationData, 
+  validateLoginData, 
+  checkEmailFormat, 
+  checkPasswordFormat 
+} from "../utils/validateUserData.js";
 
 function validateRegistration (req, res, next) {  
   const { errors, sanitizedData } = validateRegistrationData(req.body);

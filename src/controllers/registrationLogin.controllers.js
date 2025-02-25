@@ -12,7 +12,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const sslczStoreId = req.sanitizedData?.sslczStoreId;
   const sslczStorePassword = req.sanitizedData?.sslczStorePassword;
 
-  const existingUser = await User.findOne({username});
+  const existingUser = await User.findOne({ $or: [{ username }, { email }] });
 
   if (existingUser) {
     const message =
@@ -22,7 +22,6 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, message);
   }
 
-  let accessToken = "";
   let refreshToken = "null";
   const newUser = await User.create({
     firstname,
@@ -36,7 +35,6 @@ const registerUser = asyncHandler(async (req, res) => {
     refreshToken
   });
 
-  accessToken = await newUser.generateAccessToken();
   refreshToken = await newUser.generateRefreshToken();
   newUser.refreshToken = refreshToken;
   await newUser.save();

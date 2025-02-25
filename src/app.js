@@ -12,6 +12,10 @@ import usersRouter from './routes/users.routes.js';
 import notificationsRouter from './routes/notifications.routes.js';
 import ratingRouter from './routes/rating.routes.js';
 import paymentRouter from './routes/payment.routes.js';
+import studentRouter from './routes/student.routes.js';
+import teacherRouter from './routes/teacher.routes.js';
+import adminRouter from './routes/admin.routes.js';
+import postRouter from './routes/post.routes.js';
 
 
 const app = express();
@@ -47,6 +51,10 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/rating", ratingRouter);
 app.use("/api/v1/payment", paymentRouter);
+app.use("/api/v1/student", studentRouter);
+app.use("/api/v1/teacher", teacherRouter);
+app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/post", postRouter);
 
 app.use(errorHandler);
 export { app };

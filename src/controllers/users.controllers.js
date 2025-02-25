@@ -29,7 +29,6 @@ const viewProfile = asyncHandler(async (req, res) => {
   }
 });
 
-
 const updateProfile = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email } = req.body;
   const sslczStoreId = req.body?.sslczStoreId; //optionally available in the teacher 
@@ -68,8 +67,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "success"));
 });
 
-
-// I don't think view all notifications should be here. 
 const deleteAccount = asyncHandler(async (req, res) => {
   const userId = req.user._id; 
   const user = await User.findByIdAndDelete(userId);

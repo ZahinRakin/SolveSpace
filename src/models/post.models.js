@@ -1,109 +1,76 @@
 import mongoose, { Schema } from "mongoose";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import User from "./users.models";
 
-const userSchema = new Schema({
-  firstname: {
+const postSchema = new Schema({
+  // Owner details (who created the post)
+  owner_id: {
     type: String,
     required: true,
-    trim: true
   },
-  lastname: {
+  owner: {
     type: String,
-    required: true,
-    trim: true
-  },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
-    index: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    index: true,
-    lowercase: true
-  },
-  password: {
-    type: String,
-    required: [true, "Password is required"]
-  },
-  coverImage: {
-    type: String
-  },
-  role: {
-    type: String,
+    enum: ["teacher", "student"],
     required: true
   },
-  posts: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Post"
-    }
-  ],
-  batches: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Batch"
-    }
-  ],
-  refreshToken: {
+
+  // Batch details (whether it's a batch or not, max size)
+  is_batch: {
+    type: Boolean,  // Corrected the type to "Boolean"
+    required: true,
+    default: false
+  },
+  max_size: {
+    type: Number,  // Corrected the type to "Number"
+    default: 1
+  },
+
+  // Subject and class details
+  subject: {
+    type: String,
+    lowercase: true,
+  },
+  class: {
     type: String,
     required: true,
+    enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "hons", "masters"]
   },
-  resetPasswordToken: { 
+
+  // Title, subtitle, and description
+  title: {
+    type: String
+  },
+  subtitle: {
+    type: String
+  },
+  description: {
+    type: String
+  },
+
+  // Schedule and time for the session
+  schedule: {
     type: String,
-    trim: true,
-    default: null
+    enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    required: true
   },
-  resetPasswordExpires: { 
-    type: Date, 
-    default: null
-  }
-},{timestamps: true});
+  time: {
+    type: String,  // Store the time as a string (e.g., "10:00 AM")
+    required: true
+  },
 
-userSchema.pre("save", async function (next) {
-
-  if(!this.isModified("password")) return next();
-
-  this.password = await bcrypt.hash(this.password, 10);
-
-  next();
-})
-userSchema.methods.isPasswordCorrect = async function(password) {
-  return await bcrypt.compare(password, this.password)
-}
-userSchema.methods.generateAccessToken = function (){
-  //shortlived access token
-  return jwt.sign(
+  // Interested teachers and students
+  interested_teachers: [
     {
-      _id: this._id,
-      email: this.email,
-      username: this.username,
-      role: this.role
-    },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+      type: Schema.Types.ObjectId,
+      ref: "User"
     }
-  );
-}
-userSchema.methods.generateRefreshToken = function () {
-  return jwt.sign(
+  ],
+  interested_students: [
     {
-      _id: this._id
-    },
-    process.env.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+      type: Schema.Types.ObjectId,
+      ref: "User"
     }
-  )
-}
+  ]
+}, {timestamps: true});
 
-const User = mongoose.model("User", userSchema);
-export default User;
+const Post = mongoose.model("Post", postSchema);
+export default Post;
