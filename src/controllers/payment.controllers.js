@@ -9,9 +9,9 @@ import { ApiError } from '../utils/ApiError.js';
 // need: verifyJWT, totalAmount, productName, batchId, teacherId method: post
 const sslczPay = asyncHandler(async (req, res, next) => { 
   const { totalAmount, productName, batchId, teacherId } = req.body;
-  console.log(`total amount: ${totalAmount} -- productname: ${productName} -- batchId: ${batchId} -- teacherid: ${teacherId}`); //debug === reached
+  // console.log(`total amount: ${totalAmount} -- productname: ${productName} -- batchId: ${batchId} -- teacherid: ${teacherId}`); //debug === reached
   const studentId = req.user._id;
-  console.log(`user: ${studentId}`); //debug === reached
+  // console.log(`user: ${studentId}`); //debug === reached
 
   // Checking if student is part of the batch
   const batch = await Batch.findById(batchId).select("student_ids");
@@ -108,7 +108,7 @@ const sslczSuccess = asyncHandler(async (req, res) => {
     if (validationData.status === "VALID" && validationData.amount == amount) {
       console.log("Payment validated successfully:", validationData);
 
-      // ✅ Update the payment in the database
+      // Update the payment in the database
       const payment = await Payment.findOneAndUpdate(
         { trnx_id: tran_id },
         {

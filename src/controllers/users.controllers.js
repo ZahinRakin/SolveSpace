@@ -9,7 +9,7 @@ const viewProfile = asyncHandler(async (req, res) => {
   try {
     const userid = req.user._id;
     const user = await User.findById(userid).select(
-      "-_id -password -posts -batches -refreshToken -resetPasswordToken -resetPasswordExpires -createdAt -updatedAt -sslczStoreId -sslczStorePassword"
+      "firstname lastname username email coverImage role"
     );
 
     if (!user) {

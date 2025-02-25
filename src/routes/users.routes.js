@@ -7,7 +7,7 @@ const router = Router();
 
 router.route("/viewprofile").get(verifyJWT, viewProfile);
 router.route("/deleteaccount").delete(verifyJWT, deleteAccount);
-router.route("/updateprofile").post(
+router.route("/updateprofile").put(
   verifyJWT, 
   upload.single('coverImage'), 
   updateProfile
