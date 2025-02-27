@@ -1,11 +1,16 @@
+import jwt from "jsonwebtoken";
+import crypto from 'crypto';
+
 import User from "../models/users.models.js";
+import Teacher from "../models/teacher.models.js";
+import Student from "../models/student.models.js";
+
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import jwt from "jsonwebtoken";
-
-import crypto from 'crypto';
 import { sendEmail } from "./emailService.controllers.js";
+
+
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, username, email, password, role } = req.sanitizedData;
@@ -30,19 +35,32 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     role,
-    sslczStoreId,
-    sslczStorePassword,
     refreshToken
   });
+
+  try {
+    if (role === "student") {
+      await Student.create({
+        user_id: newUser._id,
+      });
+    } else if (role === "teacher") {
+      await Teacher.create({
+        user_id: newUser._id,
+        sslcz_store_id: sslczStoreId,
+        sslcz_store_password: sslczStorePassword
+      });
+    }
+  } catch (error) {
+    throw new ApiError(500, "Error in creating associated role details.");
+  }
 
   refreshToken = await newUser.generateRefreshToken();
   newUser.refreshToken = refreshToken;
   await newUser.save();
 
-  res
-    .status(201)
-    .json( new ApiResponse(201, newUser.username, "Registration successful.") );
+  res.status(201).json(new ApiResponse(201, newUser.username, "Registration successful."));
 });
+
 
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password, rememberMe } = req.sanitizedData;
