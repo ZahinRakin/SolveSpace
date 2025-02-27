@@ -6,23 +6,29 @@ const batchSchema = new Schema({
     ref: "User",
     required: true
   },
+
+  subject: {
+    type: String,
+    required: true,
+  },
+
   class: {
     type: String,
     required: true,
     enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "hons", "masters"]
   },
-  subject: {
+  
+  schedule: {
     type: String,
-    required: true,
-  },
-  date: {
-    type: String,
+    enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     required: true
   },
+  
   time: {
     type: String,
     required: true
   },
+
   student_ids:[
     {
       type: Schema.Types.ObjectId,

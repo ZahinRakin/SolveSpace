@@ -35,8 +35,6 @@ const sendNotifications = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "notification sent successfully", "success"));
 });
 
-
-
 const deleteNotifications = asyncHandler(async (req, res) => {
   try {
     const recieverId = req.user._id; 

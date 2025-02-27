@@ -19,6 +19,7 @@ const postSchema = new Schema({
     lowercase: true,
     trim: true
   },
+  
   class: {
     type: String,
     required: true,

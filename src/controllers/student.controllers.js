@@ -4,6 +4,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 import User from "../models/users.models.js";
 import Post from "../models/post.models.js";
+import Batch from "../models/batch.models.js";
+import Student from "../models/student.models.js";
 
 
 const studentDashboard = asyncHandler(async (req, res) => {
@@ -75,12 +77,88 @@ const updateRequest = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, post, "Post updated successfully"));
 });
 
-
-const applyToJoin = asyncHandler(async (req, res) => {
+const acceptTeacher = asyncHandler(async (req, res) => {
   const { id: post_id } = req.params;
+  const { teacher_id } = req.body;
   const { _id: student_id } = req.user;
 
   const post = await Post.findById(post_id);
+  if (!post) {
+    return res
+      .status(404)
+      .json(new ApiError(404, "Post not found"));
+  }
+
+  if (post.owner !== "student" || post.owner_id.toString() !== student_id.toString()) {
+    return res
+      .status(403)
+      .json(new ApiError(403, "You don’t have permission to accept teachers for this post"));
+  }
+
+  if (!post.interested_teachers.includes(teacher_id)) {
+    return res
+      .status(400)
+      .json(new ApiError(400, "This teacher hasn't expressed interest in this post"));
+  }
+
+  const existingBatch = await Batch.findOne({ teacher_id, student_ids: student_id });
+  if (existingBatch) {
+    return res
+      .status(409)
+      .json(new ApiError(409, "Batch already exists with this teacher and student"));
+  }
+
+  const batch = await Batch.create({
+    teacher_id,
+    subject: post.subject,
+    class: post.class,
+    schedule: post.schedule,
+    time: post.time,
+    student_ids: [student_id]
+  });
+
+  await post.deleteOne(); // Properly awaiting the delete operation
+
+  res
+    .status(201)
+    .json(new ApiResponse(201, batch, "Batch created successfully"));
+});
+
+const destroyBatch = asyncHandler(async (req, res) => {
+  const { id: batch_id } = req.params;
+  const { _id: student_id } = req.user;
+
+  const batch = await Batch.findById(batch_id);
+  if (!batch) {
+    return res
+      .status(404)
+      .json(new ApiError(404, "Batch not found"));
+  }
+
+  if (batch.owner === "student" && batch.owner_id.toString() === student_id.toString()) {
+    await batch.deleteOne(); // Deletes the batch
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Batch deleted successfully"));
+  } else {
+    return res
+      .status(403) // Permission issue
+      .json(new ApiError(403, "You don't have permission to delete this batch"));
+  }
+});
+
+const applyToJoin = asyncHandler(async (req, res) => {
+  const {
+    params: {
+      id: post_id
+    },
+    user: {
+      _id: student_id
+    }
+  } = req;
+
+  const post = await Post.findById(post_id);
+  const student = await Student.findById(student_id);
 
   if (!post) {
     return res
@@ -96,6 +174,9 @@ const applyToJoin = asyncHandler(async (req, res) => {
 
   post.interested_students.push(student_id);
   await post.save();
+
+  student.prev_courses.push(post);
+  await student.save();
 
   res
     .status(200)
@@ -123,6 +204,32 @@ const cancelJoin = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, post, "Join request canceled successfully"));
 });
 
+const leaveBatch = asyncHandler(async(req, res) => {
+  const { id: post_id } = req.params;
+  const { _id: student_id } = req.user;
+
+  const batch = await Batch.findById(post_id);
+
+  if (!batch) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Post not found"));
+  }
+
+  const index = batch.student_ids.indexOf(student_id);
+  if (index === -1) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "You are not enrolled in this course"));
+  }
+
+  batch.student_ids.splice(index, 1);
+  await batch.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, batch, "Successfully left the course"));
+});
 
 const searchTeacher = asyncHandler(async (req, res) => {
   const {
@@ -163,7 +270,10 @@ export {
   postRequest,
   deleteRequest,
   updateRequest,
+  acceptTeacher,
+  destroyBatch,
   applyToJoin,
   cancelJoin,
-  searchTeacher
+  searchTeacher,
+  leaveBatch
 };

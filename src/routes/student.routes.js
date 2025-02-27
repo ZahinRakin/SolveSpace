@@ -7,7 +7,10 @@ import {
   updateRequest,
   applyToJoin,
   cancelJoin,
-  searchTeacher 
+  searchTeacher,
+  leaveBatch,
+  acceptTeacher,
+  destroyBatch
 } from "../controllers/student.controllers.js";
 
 const router = Router();
@@ -19,6 +22,9 @@ router.route("/update-request/:id").put(verifyJWT, updateRequest);
 router.route("/apply-to-join/:id").post(verifyJWT, applyToJoin);
 router.route("/cancel-join/:id").delete(verifyJWT, cancelJoin);
 router.route("/search-teacher").get(verifyJWT, searchTeacher);
+router.route("/leave-batch/:id").get(verifyJWT, leaveBatch);
+router.route("/accept-teacher/:id").put(verifyJWT, acceptTeacher);
+router.route("/destroy-batch/:id").delete(verifyJWT, destroyBatch);
 
 
 export default router;
