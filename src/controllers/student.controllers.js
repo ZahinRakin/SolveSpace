@@ -1,7 +1,9 @@
-import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+
+import User from "../models/users.models.js";
+import Post from "../models/post.models.js";
 
 
 const studentDashboard = asyncHandler(async (req, res) => {
@@ -9,30 +11,151 @@ const studentDashboard = asyncHandler(async (req, res) => {
 });
 
 const postRequest = asyncHandler(async (req, res) => {
-  // Implement the logic for posting a request
+  const {
+    user: { _id : owner_id, role: owner },
+    body: {
+      subject,
+      class: className,
+      title,
+      subtitle = "",
+      description = "",
+      schedule,
+      time,
+      is_batch,
+      max_size
+    }
+  } = req;
+
+  const newPost = await Post.create({
+    owner_id,
+    owner,
+    subject,
+    class: className,
+    title,
+    subtitle,
+    description,
+    schedule,
+    time,
+    is_batch,
+    max_size
+  });
+
+  res
+    .status(201)
+    .json(new ApiResponse(201, "Post created successfully", newPost));
+
 });
 
 const deleteRequest = asyncHandler(async (req, res) => {
-  // Implement the logic for deleting a request
+  const { id: post_id } = req.params;
+
+  const post = await Post.findByIdAndDelete(post_id);
+
+  if (!post) {
+    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, post, "Post deleted successfully"));
 });
 
 const updateRequest = asyncHandler(async (req, res) => {
-  // Implement the logic for updating a request
+  const { id: post_id } = req.params;
+  const updates = req.body;
+
+  const post = await Post.findByIdAndUpdate(post_id, updates, { new: true, runValidators: true });
+
+  if (!post) {
+    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, post, "Post updated successfully"));
 });
 
+
 const applyToJoin = asyncHandler(async (req, res) => {
-  // Implement the logic for applying to join
+  const { id: post_id } = req.params;
+  const { _id: student_id } = req.user;
+
+  const post = await Post.findById(post_id);
+
+  if (!post) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Post not found"));
+  }
+
+  if (post.interested_students.includes(student_id)) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "You’ve already applied to join this post"));
+  }
+
+  post.interested_students.push(student_id);
+  await post.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, post, "Join request sent successfully"));
 });
 
 const cancelJoin = asyncHandler(async (req, res) => {
-  // Implement the logic for canceling a join request
+  const { id: post_id } = req.params;
+  const { _id: student_id } = req.user;
+
+  const post = await Post.findById(post_id);
+
+  if (!post) {
+    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
+  }
+
+  const index = post.interested_students.indexOf(student_id);
+  if (index === -1) {
+    return res.status(400).json(new ApiResponse(400, null, "You haven’t applied to this post"));
+  }
+
+  post.interested_students.splice(index, 1);
+  await post.save();
+
+  res.status(200).json(new ApiResponse(200, post, "Join request canceled successfully"));
 });
+
 
 const searchTeacher = asyncHandler(async (req, res) => {
-  // Implement the logic for searching a teacher
+  const {
+    user: { _id: student_id },
+    body: { subject, class: className, schedule, time, is_batch }
+  } = req;
+
+  const filter = {
+    owner: "teacher",
+    subject,
+    class: className,
+    schedule,
+    time
+  };
+
+  if (typeof is_batch !== 'undefined') {
+    filter.is_batch = is_batch;
+  }
+
+  const matched_posts = await Post.find(filter);
+
+  console.log(matched_posts); // test
+
+  if (!matched_posts || matched_posts.length === 0) {
+    return res
+      .status(404)
+      .json(new ApiError(404, "No posts found"));
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, matched_posts, "Success"));
 });
-
-
 
 
 export {

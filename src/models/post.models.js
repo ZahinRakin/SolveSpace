@@ -13,37 +13,33 @@ const postSchema = new Schema({
     required: true
   },
 
-  // Batch details (whether it's a batch or not, max size)
-  is_batch: {
-    type: Boolean,  // Corrected the type to "Boolean"
-    required: true,
-    default: false
-  },
-  max_size: {
-    type: Number,  // Corrected the type to "Number"
-    default: 1
-  },
-
   // Subject and class details
   subject: {
     type: String,
     lowercase: true,
+    trim: true
   },
   class: {
     type: String,
     required: true,
-    enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "hons", "masters"]
+    enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "hons", "masters"],
+    trim: true,
+    lowercase: true
   },
 
   // Title, subtitle, and description
   title: {
-    type: String
+    type: String,
+    required: true,
+    trim: true
   },
   subtitle: {
-    type: String
+    type: String,
+    trim: true
   },
   description: {
-    type: String
+    type: String,
+    trim: true
   },
 
   // Schedule and time for the session
@@ -55,6 +51,17 @@ const postSchema = new Schema({
   time: {
     type: String,  // Store the time as a string (e.g., "10:00 AM")
     required: true
+  },
+
+  // Batch details (whether it's a batch or not, max size)
+  is_batch: {
+    type: Boolean,  // Corrected the type to "Boolean"
+    required: true,
+    default: false
+  },
+  max_size: {
+    type: Number,  // Corrected the type to "Number"
+    default: 2
   },
 
   // Interested teachers and students
