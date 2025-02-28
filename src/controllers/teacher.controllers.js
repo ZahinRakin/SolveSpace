@@ -2,6 +2,10 @@ import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { 
+  sendNotification,
+  systemNotification
+} from "./notification.controllers.js";
 
 import Batch from "../models/batch.models.js";
 import Post from "../models/post.models.js";
@@ -10,54 +14,6 @@ import Student from "../models/student.models.js";
 
 const teacherDashboard = asyncHandler(async (req, res) => {
   //yet to implement 
-});
-
-const postTuition = asyncHandler(async (req, res) => {
-  const {
-    user: {
-      _id: owner_id,
-      role: owner
-    },
-    body: {
-      subject,
-      class: className,
-      title,
-      subtitle = "",
-      description = "",
-      weekly_schedule = [], // Ensure it's an array as per the schema
-      time,
-      salary,
-      is_continuous,
-      is_batch,
-      max_size
-    }
-  } = req;
-
-  try {
-    const post = await Post.create({
-      owner_id,
-      owner,
-      subject,
-      class: className,
-      title,
-      subtitle,
-      description,
-      weekly_schedule,
-      time,
-      salary,
-      is_continuous,
-      is_batch,
-      max_size
-    });
-
-    res
-      .status(201)
-      .json(new ApiResponse(201, post, "Post created successfully"));
-  } catch (error) {
-    res
-      .status(400)
-      .json(new ApiError(400, error.message || "Failed to create post"));
-  }
 });
 
 const updatePost = asyncHandler(async (req, res) => {
@@ -178,54 +134,6 @@ const cancelInterest = asyncHandler(async (req, res) => {
 
 //upto this point tested the APIs
 
-const createBatch = asyncHandler(async (req, res) => {
-  const {
-    params: {
-      id: post_id
-    },
-    user: {
-      _id: teacher_id // this is a user id, not the _id from the teacher schema
-    }
-  } = req;
-
-  const post = await Post.findById(post_id);
-  if (!post) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Post not found"));
-  }
-
-  if (post.owner !== "teacher" || post.owner_id.toString() !== teacher_id.toString()) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "Only your own posts can be transformed into a batch."));
-  }
-
-  const student_ids = post.interested_students;
-
-  const batch = await Batch.create({
-    teacher_id,
-    subject: post.subject,
-    class: post.class,
-    weekly_schedule: post.weekly_schedule,
-    time: post.time,
-    student_ids
-  });
-
-  await Promise.all(student_ids.map(async (sid) => {
-    const student = await Student.findOne({ user_id: sid });
-    if (student) {
-      student.prev_courses.push(batch._id);
-      await student.save();
-    }
-  }));
-
-  await post.deleteOne(); // Removing the post after batch creation
-
-  res
-    .status(201)
-    .json(new ApiResponse(201, batch, "Batch created successfully"));
-});
 
 const searchStudent = asyncHandler(async (req, res) => {
   const {
@@ -303,6 +211,124 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Student added to batch successfully"));
 });
+
+const createBatch = asyncHandler(async (req, res) => {
+  const {
+    params: { id: post_id },
+    user: { _id: teacher_id }
+  } = req;
+
+  const post = await Post.findById(post_id);
+  if (!post) {
+    return res.status(404).json(new ApiError(404, "Post not found"));
+  }
+
+  if (post.owner !== "teacher" || !post.owner_id.equals(teacher_id)) {
+    return res.status(403).json(new ApiError(403, "Only your own posts can be transformed into a batch."));
+  }
+
+  try {
+    const batch = await postToBatch(post);
+    res.status(201).json(new ApiResponse(201, batch, "Batch created successfully"));
+  } catch (error) {
+    res.status(error.statusCode || 500).json(new ApiError(error.statusCode || 500, error.message));
+  }
+});
+
+const postTuition = asyncHandler(async (req, res) => {
+  const {
+    user: { _id: owner_id, role: owner },
+    body: {
+      subject,
+      class: className,
+      title,
+      subtitle = "",
+      description = "",
+      weekly_schedule = [],
+      time,
+      salary,
+      is_continuous,
+      is_batch,
+      max_size
+    }
+  } = req;
+
+  try {
+    const post = await Post.create({
+      owner_id,
+      owner,
+      subject,
+      class: className,
+      title,
+      subtitle,
+      description,
+      weekly_schedule,
+      time,
+      salary,
+      is_continuous,
+      is_batch,
+      max_size
+    });
+
+    // Start monitoring and keep track of the interval ID
+    const intervalID = setInterval(() => monitorBatchSize(post._id, intervalID), 3600000);
+
+    res
+      .status(201)
+      .json(new ApiResponse(201, post, "Post created successfully"));
+  } catch (error) {
+    res
+      .status(400)
+      .json(new ApiError(400, error.message || "Failed to create post"));
+  }
+});
+
+async function monitorBatchSize(post_id, intervalID) {
+  const post = await Post.findById(post_id);
+  if (!post) {
+    console.error("Post not found, stopping monitoring.");
+    return clearInterval(intervalID); // Stop if the post is gone
+  }
+
+  if (post.interested_students.length >= post.max_size) {
+    try {
+      const batch = await postToBatch(post);
+      await systemNotification(post.owner_id, `Post [${post._id}]'s capacity full. Batch [${batch._id}] created.`);
+      clearInterval(intervalID); // Stop once the batch is created
+    } catch (error) {
+      console.error(`Failed to create batch: ${error.message}`);
+    }
+  }
+}
+
+async function postToBatch(post) {
+  const student_ids = post.interested_students;
+
+  const batch = await Batch.create({
+    teacher_id: post.owner_id,
+    subject: post.subject,
+    class: post.class,
+    weekly_schedule: post.weekly_schedule,
+    time: post.time,
+    salary: post.salary,
+    is_continuous: post.is_continuous,
+    is_batch: post.is_batch,
+    student_ids
+  });
+
+  await Promise.all(student_ids.map(async (sid) => {
+    const student = await Student.findOne({ user_id: sid });
+    if (student) {
+      student.prev_courses.push(batch._id);
+      await student.save();
+    }
+  }));
+
+  await post.deleteOne();
+
+  return batch;
+}
+
 
 export {
   teacherDashboard,

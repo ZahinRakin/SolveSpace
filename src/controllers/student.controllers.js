@@ -134,6 +134,12 @@ const applyToJoin = asyncHandler(async (req, res) => {
       .json(new ApiResponse(404, null, "Post not found"));
   }
 
+  if(post.interested_students.length >= post.max_size){
+    return res
+      .status(400)
+      .ApiResponse(400, null, "Batch is full.");
+  }
+
   if (post.interested_students.includes(student_id)) {
     return res
       .status(400)
@@ -176,40 +182,36 @@ const acceptTeacher = asyncHandler(async (req, res) => {
     const {
       params: { id: post_id },
       body: { teacher_id },
-      user: { _id: student_id }
+      user: { 
+        _id: student_id,
+        role
+      }
     } = req;
 
     const post = await Post.findById(post_id);
     if (!post) {
       return res
         .status(404)
-        .json(new ApiError(404, "Post not found"));
+        .json(new ApiResponse(404, null, "Post not found"));
     }
 
     const student = await Student.findOne({ user_id: student_id });
     if (!student) {
       return res
         .status(404)
-        .json(new ApiError(404, "Student not found"));
+        .json(new ApiResponse(404, null, "Student not found"));
     }
 
-    if (post.owner !== "student" || post.owner_id.toString() !== student_id.toString()) {
+    if (post.owner !== role || !post.owner_id.equals(student_id)) {
       return res
         .status(403)
-        .json(new ApiError(403, "You don’t have permission to accept teachers for this post"));
+        .json(new ApiResponse(403, null, "You don’t have permission to accept teachers for this post"));
     }
 
     if (!post.interested_teachers.includes(teacher_id)) {
       return res
         .status(400)
-        .json(new ApiError(400, "This teacher hasn't expressed interest in this post"));
-    }
-
-    const existingBatch = await Batch.findOne({ teacher_id, student_ids: student_id });
-    if (existingBatch) {
-      return res
-        .status(409)
-        .json(new ApiError(409, "Batch already exists with this teacher and student"));
+        .json(new ApiResponse(400, null, "This teacher hasn't expressed interest in this post"));
     }
 
     const batch = await Batch.create({
@@ -218,6 +220,8 @@ const acceptTeacher = asyncHandler(async (req, res) => {
       class: post.class,
       weekly_schedule: post.weekly_schedule,
       time: post.time,
+      salary: post.salary,
+      is_continuous: post.is_continuous,
       student_ids: [student_id]
     });
 
@@ -232,7 +236,7 @@ const acceptTeacher = asyncHandler(async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json(new ApiError(500, "An unexpected error occurred"));
+      .json(new ApiResponse(500, null, "An unexpected error occurred"));
   }
 });
 

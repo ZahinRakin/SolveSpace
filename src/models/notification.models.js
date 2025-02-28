@@ -10,7 +10,6 @@ const notificationSchema = new mongoose.Schema({
   senderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', 
-    required: false, 
   },
   message: {
     type: String, 

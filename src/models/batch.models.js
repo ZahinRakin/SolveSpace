@@ -28,7 +28,20 @@ const batchSchema = new Schema({
     type: String,
     required: true
   },
+  salary: {
+    type: Number,
+    defualt: 0,
+  },
 
+
+  is_continuous: {
+    type: Boolean,
+    default: false
+  },
+  is_batch: {
+    type: Boolean,
+    default: false
+  },
   student_ids:[
     {
       type: Schema.Types.ObjectId,

@@ -19,23 +19,46 @@ const getNotifications = asyncHandler(async (req, res) => {
   }
 });
 
-const sendNotifications = asyncHandler(async (req, res) => {
-  const recieverId = req.params.recieverId; //recheck.
-  const senderId = req.user._id;
-  const message = req.body.message;
+///////// I don't think this method should be like this.
+// const sendNotifications = asyncHandler(async (req, res) => {
+//   const recieverId = req.params.recieverId; //recheck.
+//   const senderId = req.user._id;
+//   const message = req.body.message;
 
-  const notifications = Notification.create({
-    recieverId,
-    senderId,
-    message
-  });
+//   const notifications = await Notification.create({
+//     recieverId,
+//     senderId,
+//     message
+//   });
 
-  res
-    .status(201)
-    .json(new ApiResponse(201, "notification sent successfully", "success"));
-});
+//   res
+//     .status(201)
+//     .json(new ApiResponse(201, "notification sent successfully", "success"));
+// });
+async function sendNotification(recieverID, senderID, message){
+  try {
+    const notification = await Notification.create({
+      recieverID,
+      senderID,
+      message
+    });
+  } catch (error) {
+    throw new ApiError(error.statusCode, error.message);
+  }
+}
 
-const deleteNotifications = asyncHandler(async (req, res) => {
+async function systemNotification(recieverID, message) {
+  try {
+    const notifications = await Notification.create({
+      recieverID,
+      message
+    });
+  } catch (error) {
+    throw new ApiError(error.statusCode, error.message);
+  }
+} 
+
+const deleteNotification = asyncHandler(async (req, res) => {
   try {
     const recieverId = req.user._id; 
     const notificationId = req.body.notificationId;
@@ -60,6 +83,8 @@ const deleteNotifications = asyncHandler(async (req, res) => {
 
 export { 
   getNotifications, 
-  sendNotifications,
-  deleteNotifications 
+  deleteNotification,
+
+  sendNotification,
+  systemNotification
 };
