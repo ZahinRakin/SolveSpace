@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+import Batch from "../models/batch.models.js";
+
 
 const adminDashboard = asyncHandler(async (req, res) => {
   //here i can show the app performance. number of teachers and number of students
@@ -103,6 +105,53 @@ const viewAllTeacher = asyncHandler(async (req, res) => {
   }
 });
 
+const viewAllCourses = asyncHandler(async (req, res) => {
+  const courses = await Batch.find().populate('teacher_id').populate('student_ids');
+
+  if (courses.length > 0) {
+    res
+      .status(200)
+      .json(new ApiResponse(200, courses, "Courses fetched successfully"));
+  } else {
+    res
+      .status(404)
+      .json(new ApiError(404, "No courses found."));
+  }
+});
+
+const removeCourses = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const course = await Batch.findById(id);
+
+  if (!course) {
+    return res
+      .status(404)
+      .json(new ApiError(404, "Course not found."));
+  }
+
+  await course.deleteOne();
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Course removed successfully", "success"));
+});
+
+const addCourses = asyncHandler(async (req, res) => {
+  const { teacher_id, subject, class: className, schedule, time, student_ids } = req.body;
+
+  const course = await Batch.create({
+    teacher_id,
+    subject,
+    class: className,
+    schedule,
+    time,
+    student_ids
+  });
+
+  res
+    .status(201)
+    .json(new ApiResponse(201, course, "Course added successfully"));
+});
 
 
 export {
@@ -110,5 +159,8 @@ export {
   addUser,
   removeUser,
   viewAllStudent,
-  viewAllTeacher
+  viewAllTeacher,
+  viewAllCourses,
+  removeCourses,
+  addCourses
 };
