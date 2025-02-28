@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import User from "./users.models.js";
-import Post from "./post.models.js";
+import Batch from "./batch.models.js";
 
 const studentSchema = new Schema({
   user_id: {
@@ -10,7 +10,7 @@ const studentSchema = new Schema({
   prev_courses: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Post"
+      ref: "Batch"
     }
   ]
 },{timestamps: true});

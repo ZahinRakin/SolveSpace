@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 import Batch from "../models/batch.models.js";
 import Post from "../models/post.models.js";
+import Student from "../models/student.models.js";
 
 
 const teacherDashboard = asyncHandler(async (req, res) => {
@@ -111,8 +112,14 @@ const deletePost = asyncHandler(async (req, res) => {
 });
 
 const createBatch = asyncHandler(async (req, res) => {
-  const { id: post_id } = req.params;
-  const { _id: teacher_id } = req.user;
+  const {
+    params: {
+      id: post_id
+    },
+    user: {
+      _id: teacher_id // this is a user id, not the _id from the teacher schema
+    }
+  } = req;
 
   const post = await Post.findById(post_id);
   if (!post) {
@@ -121,11 +128,13 @@ const createBatch = asyncHandler(async (req, res) => {
       .json(new ApiError(404, "Post not found"));
   }
 
-  if (post.owner !== "teacher" || post.owner_id.toString() !== teacher_id) {
+  if (post.owner !== "teacher" || post.owner_id.toString() !== teacher_id.toString()) {
     return res
       .status(403)
-      .json(new ApiError(403, "Posts that belong to you can be transformed into a batch."));
+      .json(new ApiError(403, "Only your own posts can be transformed into a batch."));
   }
+
+  const student_ids = post.interested_students;
 
   const batch = await Batch.create({
     teacher_id,
@@ -133,8 +142,16 @@ const createBatch = asyncHandler(async (req, res) => {
     class: post.class,
     schedule: post.schedule,
     time: post.time,
-    student_ids: post.interested_students
+    student_ids
   });
+
+  await Promise.all(student_ids.map(async (sid) => {
+    const student = await Student.findOne({ user_id: sid });
+    if (student) {
+      student.prev_courses.push(batch._id);
+      await student.save();
+    }
+  }));
 
   await post.deleteOne(); // Removing the post after batch creation
 

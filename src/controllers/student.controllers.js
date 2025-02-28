@@ -78,50 +78,68 @@ const updateRequest = asyncHandler(async (req, res) => {
 });
 
 const acceptTeacher = asyncHandler(async (req, res) => {
-  const { id: post_id } = req.params;
-  const { teacher_id } = req.body;
-  const { _id: student_id } = req.user;
+  try {
+    const {
+      params: { id: post_id },
+      body: { teacher_id },
+      user: { _id: student_id }
+    } = req;
 
-  const post = await Post.findById(post_id);
-  if (!post) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Post not found"));
+    const post = await Post.findById(post_id);
+    if (!post) {
+      return res
+        .status(404)
+        .json(new ApiError(404, "Post not found"));
+    }
+
+    const student = await Student.findOne({ user_id: student_id });
+    if (!student) {
+      return res
+        .status(404)
+        .json(new ApiError(404, "Student not found"));
+    }
+
+    if (post.owner !== "student" || post.owner_id.toString() !== student_id.toString()) {
+      return res
+        .status(403)
+        .json(new ApiError(403, "You don’t have permission to accept teachers for this post"));
+    }
+
+    if (!post.interested_teachers.includes(teacher_id)) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "This teacher hasn't expressed interest in this post"));
+    }
+
+    const existingBatch = await Batch.findOne({ teacher_id, student_ids: student_id });
+    if (existingBatch) {
+      return res
+        .status(409)
+        .json(new ApiError(409, "Batch already exists with this teacher and student"));
+    }
+
+    const batch = await Batch.create({
+      teacher_id,
+      subject: post.subject,
+      class: post.class,
+      schedule: post.schedule,
+      time: post.time,
+      student_ids: [student_id]
+    });
+
+    student.prev_courses.push(batch._id);
+    await student.save();
+
+    await post.deleteOne();
+
+    res
+      .status(201)
+      .json(new ApiResponse(201, batch, "Batch created successfully"));
+  } catch (error) {
+    res
+      .status(500)
+      .json(new ApiError(500, "An unexpected error occurred"));
   }
-
-  if (post.owner !== "student" || post.owner_id.toString() !== student_id.toString()) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "You don’t have permission to accept teachers for this post"));
-  }
-
-  if (!post.interested_teachers.includes(teacher_id)) {
-    return res
-      .status(400)
-      .json(new ApiError(400, "This teacher hasn't expressed interest in this post"));
-  }
-
-  const existingBatch = await Batch.findOne({ teacher_id, student_ids: student_id });
-  if (existingBatch) {
-    return res
-      .status(409)
-      .json(new ApiError(409, "Batch already exists with this teacher and student"));
-  }
-
-  const batch = await Batch.create({
-    teacher_id,
-    subject: post.subject,
-    class: post.class,
-    schedule: post.schedule,
-    time: post.time,
-    student_ids: [student_id]
-  });
-
-  await post.deleteOne(); // Properly awaiting the delete operation
-
-  res
-    .status(201)
-    .json(new ApiResponse(201, batch, "Batch created successfully"));
 });
 
 const destroyBatch = asyncHandler(async (req, res) => {
@@ -158,7 +176,6 @@ const applyToJoin = asyncHandler(async (req, res) => {
   } = req;
 
   const post = await Post.findById(post_id);
-  const student = await Student.findById(student_id);
 
   if (!post) {
     return res
@@ -169,14 +186,11 @@ const applyToJoin = asyncHandler(async (req, res) => {
   if (post.interested_students.includes(student_id)) {
     return res
       .status(400)
-      .json(new ApiResponse(400, null, "You’ve already applied to join this post"));
+      .json(new ApiResponse(400, null, "You have already applied to join this post"));
   }
 
   post.interested_students.push(student_id);
   await post.save();
-
-  student.prev_courses.push(post);
-  await student.save();
 
   res
     .status(200)
@@ -269,11 +283,14 @@ export {
   studentDashboard,
   postRequest,
   deleteRequest,
+
   updateRequest,
   acceptTeacher,
   destroyBatch,
+
   applyToJoin,
   cancelJoin,
   searchTeacher,
+  
   leaveBatch
 };
