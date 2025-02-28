@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import User from "./users.models";
+import User from "./users.models.js";
 
 const postSchema = new Schema({
   // Owner details (who created the post)
@@ -19,7 +19,7 @@ const postSchema = new Schema({
     lowercase: true,
     trim: true
   },
-  
+
   class: {
     type: String,
     required: true,
