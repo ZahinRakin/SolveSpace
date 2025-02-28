@@ -20,4 +20,5 @@ This is the SPL-2 project of our team.
 4. [react-router](https://reactrouter.com/en/main/start/tutorial)
 5. express for backend
 6. tailwind css
-   join our github profile :https://github.com/Shakibbhai/SolveSpace.git
+7. join our github profile Shakib :https://github.com/Shakibbhai/SolveSpace.git
+8. and Rakin: https://github.com/ZahinRakin/SolveSpace.git
