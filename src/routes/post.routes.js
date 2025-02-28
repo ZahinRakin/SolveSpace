@@ -18,16 +18,16 @@ import {
 
 const router = Router();
 //teacher
-router.route("/post-tuition").post(verifyJWT, postTuition);
-router.route("/update-post/:id").put(verifyJWT, updatePost);
-router.route("/delete-post/:id").delete(verifyJWT, deletePost);
+router.route("/tuition").post(verifyJWT, postTuition);
+router.route("/update-tuition/:id").put(verifyJWT, updatePost);
+router.route("/delete-tuition/:id").delete(verifyJWT, deletePost);
 router.route("/show-interest/:id").post(verifyJWT, showInterest);
 router.route("/cancel-interest/:id").delete(verifyJWT, cancelInterest);
 //student
-router.route("/post-request").post(verifyJWT, postRequest);
-router.route("/delete-request/:id").delete(verifyJWT, deleteRequest);
+router.route("/request").post(verifyJWT, postRequest);
 router.route("/update-request/:id").put(verifyJWT, updateRequest);
-router.route("/apply-to-join/:id").post(verifyJWT, applyToJoin);
+router.route("/delete-request/:id").delete(verifyJWT, deleteRequest);
+router.route("/apply/:id").post(verifyJWT, applyToJoin);
 router.route("/cancel-join/:id").delete(verifyJWT, cancelJoin);
 
 export default router;

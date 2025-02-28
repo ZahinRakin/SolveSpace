@@ -7,7 +7,7 @@ import Batch from '../models/batch.models.js';
 import { ApiError } from '../utils/ApiError.js';
 
 // need: verifyJWT, totalAmount, productName, batchId, teacherId method: post
-const sslczPay = asyncHandler(async (req, res, next) => { 
+const sslczPay = asyncHandler(async (req, res) => { 
   const { totalAmount, productName, batchId, teacherId } = req.body;
   // console.log(`total amount: ${totalAmount} -- productname: ${productName} -- batchId: ${batchId} -- teacherid: ${teacherId}`); //debug === reached
   const studentId = req.user._id;

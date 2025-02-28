@@ -24,8 +24,10 @@ const postTuition = asyncHandler(async (req, res) => {
       title,
       subtitle = "",
       description = "",
-      schedule,
+      weekly_schedule = [], // Ensure it's an array as per the schema
       time,
+      salary,
+      is_continuous,
       is_batch,
       max_size
     }
@@ -40,8 +42,10 @@ const postTuition = asyncHandler(async (req, res) => {
       title,
       subtitle,
       description,
-      schedule,
+      weekly_schedule,
       time,
+      salary,
+      is_continuous,
       is_batch,
       max_size
     });
@@ -66,7 +70,7 @@ const updatePost = asyncHandler(async (req, res) => {
       .status(400)
       .json(new ApiError(400, "No update data provided"));
   }
-
+  
   const post = await Post.findById(post_id);
   if (!post) {
     return res
@@ -74,17 +78,25 @@ const updatePost = asyncHandler(async (req, res) => {
       .json(new ApiError(404, "Post not found"));
   }
 
-  if (!(post.owner === "teacher" && post.owner_id === teacher_id)) {
+  if (post.owner !== "teacher" || !post.owner_id.equals(teacher_id)) {
     return res
       .status(403)
       .json(new ApiError(403, "You don't have permission to update this post"));
   }
 
-  const updatedPost = await Post.findByIdAndUpdate(post_id, updatedInfo, { new: true });
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, updatedPost, "Post updated successfully"));
+  try {
+    const updatedPost = await Post.findByIdAndUpdate(post_id, {
+      $set: updatedInfo
+    }, { new: true });
+  
+    res
+      .status(200)
+      .json(new ApiResponse(200, updatedPost, "Post updated successfully"));
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json(new ApiError(error.status || 500, error.message || "Problem with database"));
+  }
 });
 
 const deletePost = asyncHandler(async (req, res) => {
@@ -98,7 +110,7 @@ const deletePost = asyncHandler(async (req, res) => {
       .json(new ApiError(404, "Post not found"));
   }
 
-  if (!(post.owner === "teacher" && post.owner_id === teacher_id)) {
+  if (post.owner !== "teacher" || !post.owner_id.equals(teacher_id)) {
     return res
       .status(403)
       .json(new ApiError(403, "You don't have permission to delete this post"));
@@ -111,55 +123,6 @@ const deletePost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Post deleted successfully"));
 });
 
-const createBatch = asyncHandler(async (req, res) => {
-  const {
-    params: {
-      id: post_id
-    },
-    user: {
-      _id: teacher_id // this is a user id, not the _id from the teacher schema
-    }
-  } = req;
-
-  const post = await Post.findById(post_id);
-  if (!post) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Post not found"));
-  }
-
-  if (post.owner !== "teacher" || post.owner_id.toString() !== teacher_id.toString()) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "Only your own posts can be transformed into a batch."));
-  }
-
-  const student_ids = post.interested_students;
-
-  const batch = await Batch.create({
-    teacher_id,
-    subject: post.subject,
-    class: post.class,
-    schedule: post.schedule,
-    time: post.time,
-    student_ids
-  });
-
-  await Promise.all(student_ids.map(async (sid) => {
-    const student = await Student.findOne({ user_id: sid });
-    if (student) {
-      student.prev_courses.push(batch._id);
-      await student.save();
-    }
-  }));
-
-  await post.deleteOne(); // Removing the post after batch creation
-
-  res
-    .status(201)
-    .json(new ApiResponse(201, batch, "Batch created successfully"));
-});
-
 const showInterest = asyncHandler(async (req, res) => {
   const { id: post_id } = req.params;
   const { _id: teacher_id } = req.user;
@@ -168,14 +131,14 @@ const showInterest = asyncHandler(async (req, res) => {
   if (!post) {
     return res
       .status(404)
-      .json(new ApiError(404, "Post not found"));
+      .json(new ApiResponse(404, "Post not found", null, "false"));
   }
 
   // Check if teacher has already shown interest
   if (post.interested_teachers.includes(teacher_id)) {
     return res
       .status(409)
-      .json(new ApiError(409, "You have already expressed interest in this post"));
+      .json(new ApiResponse(409, "You have already expressed interest in this post", null, "false"));
   }
 
   // Add teacher and save
@@ -213,17 +176,68 @@ const cancelInterest = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Interest cancelled successfully"));
 });
 
+//upto this point tested the APIs
+
+const createBatch = asyncHandler(async (req, res) => {
+  const {
+    params: {
+      id: post_id
+    },
+    user: {
+      _id: teacher_id // this is a user id, not the _id from the teacher schema
+    }
+  } = req;
+
+  const post = await Post.findById(post_id);
+  if (!post) {
+    return res
+      .status(404)
+      .json(new ApiError(404, "Post not found"));
+  }
+
+  if (post.owner !== "teacher" || post.owner_id.toString() !== teacher_id.toString()) {
+    return res
+      .status(403)
+      .json(new ApiError(403, "Only your own posts can be transformed into a batch."));
+  }
+
+  const student_ids = post.interested_students;
+
+  const batch = await Batch.create({
+    teacher_id,
+    subject: post.subject,
+    class: post.class,
+    weekly_schedule: post.weekly_schedule,
+    time: post.time,
+    student_ids
+  });
+
+  await Promise.all(student_ids.map(async (sid) => {
+    const student = await Student.findOne({ user_id: sid });
+    if (student) {
+      student.prev_courses.push(batch._id);
+      await student.save();
+    }
+  }));
+
+  await post.deleteOne(); // Removing the post after batch creation
+
+  res
+    .status(201)
+    .json(new ApiResponse(201, batch, "Batch created successfully"));
+});
+
 const searchStudent = asyncHandler(async (req, res) => {
   const {
     user: { _id: teacher_id },
-    body: { subject, class: className, schedule, time, is_batch }
+    body: { subject, class: className, weekly_schedule, time, is_batch }
   } = req;
 
   const filter = {
     owner: "student",
     subject,
     class: className,
-    schedule,
+    weekly_schedule,
     time
   };
 

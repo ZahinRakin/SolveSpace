@@ -2,9 +2,9 @@ import mongoose, { Schema } from "mongoose";
 import User from "./users.models.js";
 
 const postSchema = new Schema({
-  // Owner details (who created the post)
   owner_id: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: "User",
     required: true,
   },
   owner: {
@@ -13,7 +13,7 @@ const postSchema = new Schema({
     required: true
   },
 
-  // Subject and class details
+
   subject: {
     type: String,
     lowercase: true,
@@ -28,7 +28,7 @@ const postSchema = new Schema({
     lowercase: true
   },
 
-  // Title, subtitle, and description
+
   title: {
     type: String,
     required: true,
@@ -43,29 +43,38 @@ const postSchema = new Schema({
     trim: true
   },
 
-  // Schedule and time for the session
-  schedule: {
-    type: String,
-    enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+
+  weekly_schedule: [
+    {
+      type: String,
+      enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      required: true
+    }
+  ],
+  time: {
+    type: String,  //(e.g., "10:00 AM")
     required: true
   },
-  time: {
-    type: String,  // Store the time as a string (e.g., "10:00 AM")
-    required: true
+  salary: {
+    type: Number,
+    defualt: 0,
   },
 
-  // Batch details (whether it's a batch or not, max size)
+
+  is_continuous: {
+    type: Boolean,
+    default: false
+  },
   is_batch: {
-    type: Boolean,  // Corrected the type to "Boolean"
-    required: true,
+    type: Boolean,
     default: false
   },
   max_size: {
-    type: Number,  // Corrected the type to "Number"
+    type: Number,
     default: 2
   },
 
-  // Interested teachers and students
+
   interested_teachers: [
     {
       type: Schema.Types.ObjectId,
