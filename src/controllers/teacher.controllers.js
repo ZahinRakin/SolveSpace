@@ -1,109 +1,48 @@
-import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { 
-  sendNotification,
-  systemNotification
-} from "./notification.controllers.js";
+  postToBatch, 
+  monitorBatchSize 
+} from "./post.controllers.js";
 
 import Batch from "../models/batch.models.js";
 import Post from "../models/post.models.js";
-import Student from "../models/student.models.js";
 
 
 const teacherDashboard = asyncHandler(async (req, res) => {
   //yet to implement 
 });
 
-const updatePost = asyncHandler(async (req, res) => {
-  const { id: post_id } = req.params;
-  const { _id: teacher_id } = req.user;
-  const updatedInfo = req.body;
-
-  if (Object.keys(updatedInfo).length === 0) {
-    return res
-      .status(400)
-      .json(new ApiError(400, "No update data provided"));
-  }
-  
-  const post = await Post.findById(post_id);
-  if (!post) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Post not found"));
-  }
-
-  if (post.owner !== "teacher" || !post.owner_id.equals(teacher_id)) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "You don't have permission to update this post"));
-  }
-
-  try {
-    const updatedPost = await Post.findByIdAndUpdate(post_id, {
-      $set: updatedInfo
-    }, { new: true });
-  
-    res
-      .status(200)
-      .json(new ApiResponse(200, updatedPost, "Post updated successfully"));
-  } catch (error) {
-    res
-      .status(error.status || 500)
-      .json(new ApiError(error.status || 500, error.message || "Problem with database"));
-  }
-});
-
-const deletePost = asyncHandler(async (req, res) => {
-  const { id: post_id } = req.params;
-  const { _id: teacher_id } = req.user;
-
-  const post = await Post.findById(post_id);
-  if (!post) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Post not found"));
-  }
-
-  if (post.owner !== "teacher" || !post.owner_id.equals(teacher_id)) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "You don't have permission to delete this post"));
-  }
-
-  await Post.findByIdAndDelete(post_id);
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, null, "Post deleted successfully"));
-});
-
 const showInterest = asyncHandler(async (req, res) => {
-  const { id: post_id } = req.params;
-  const { _id: teacher_id } = req.user;
+  const {
+    params: { id: post_id }, // Fixed 'is' to 'id'
+    user: { _id: teacher_id, role }
+  } = req;
 
-  const post = await Post.findById(post_id);
+  console.log("user: ", req.user); // Debugging
+
+  const post = await Post.findById(post_id).select("owner interested_teachers");
+  console.log("post: ", post); // Debugging
+
   if (!post) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, "Post not found", null, "false"));
+    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
   }
 
-  // Check if teacher has already shown interest
+  // Prevent users from showing interest in their own posts
+  if (post.owner === role) {
+    return res.status(400).json(new ApiResponse(400, null, "You can't show interest in your own post."));
+  }
+
+  // Check if the user already expressed interest
   if (post.interested_teachers.includes(teacher_id)) {
-    return res
-      .status(409)
-      .json(new ApiResponse(409, "You have already expressed interest in this post", null, "false"));
+    return res.status(409).json(new ApiResponse(409, null, "You have already expressed interest in this post"));
   }
 
-  // Add teacher and save
   post.interested_teachers.push(teacher_id);
   await post.save();
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, null, "Interest registered successfully"));
+  res.status(200).json(new ApiResponse(200, null, "Interest registered successfully"));
 });
 
 const cancelInterest = asyncHandler(async (req, res) => {
@@ -132,30 +71,27 @@ const cancelInterest = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Interest cancelled successfully"));
 });
 
-//upto this point tested the APIs
-
-
 const searchStudent = asyncHandler(async (req, res) => {
   const {
-    user: { _id: teacher_id },
-    body: { subject, class: className, weekly_schedule, time, is_batch }
+    // user: { _id: teacher_id },
+    body: filter
   } = req;
 
-  const filter = {
-    owner: "student",
-    subject,
-    class: className,
-    weekly_schedule,
-    time
-  };
+  filter.owner = "student";
 
-  if (typeof is_batch !== 'undefined') {
-    filter.is_batch = is_batch;
-  }
+  
 
-  const matched_posts = await Post.find(filter);
+  const allowedFilters = ["owner" ,"subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
+  const sanitizedFilter = Object.keys(filter)
+    .filter(key => allowedFilters.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = filter[key];
+      return obj;
+    }, {});
 
-  console.log(matched_posts); // test
+  const matched_posts = await Post
+    .find(sanitizedFilter)
+    .select("-owner_id -owner -interested_teachers -interested_students");
 
   if (!matched_posts || matched_posts.length === 0) {
     return res
@@ -168,180 +104,44 @@ const searchStudent = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, matched_posts, "Success"));
 });
 
-const removeStudentFromBatch = asyncHandler(async (req, res) => {
-  //here i should send notification to the student and teacher about the removal.
-  const { id: student_id } = req.params;
-  const { batch_id } = req.body;
-
-  const batch = await Batch.findById(batch_id);
-  if (!batch) {
-    throw new ApiError(404, "Batch not found");
-  }
-
-  const studentIndex = batch.students.indexOf(student_id);
-  if (studentIndex === -1) {
-    throw new ApiError(404, "Student not found in batch");
-  }
-
-  batch.students.splice(studentIndex, 1);
-  await batch.save();
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, "Student removed from batch successfully"));
-});
-
-const addStudentToBatch = asyncHandler(async (req, res) => {
-  const { id: student_id } = req.params;
-  const { batch_id } = req.body;
-
-  const batch = await Batch.findById(batch_id);
-  if (!batch) {
-    throw new ApiError(404, "Batch not found");
-  }
-
-  if (batch.students.includes(student_id)) {
-    throw new ApiError(400, "Student already in batch");
-  }
-
-  batch.students.push(student_id);
-  await batch.save();
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, "Student added to batch successfully"));
-});
+//upto this point tested the APIs
 
 const createBatch = asyncHandler(async (req, res) => {
   const {
     params: { id: post_id },
-    user: { _id: teacher_id }
+    user: { _id: teacher_id, role }
   } = req;
+
+  if (role !== "teacher") {
+    return res
+      .status(403)
+      .json(new ApiResponse(403, null, "Only teachers can create a batch from his post. If you are a student then select a teacher the batch will automatically be created."));
+  }
 
   const post = await Post.findById(post_id);
   if (!post) {
-    return res.status(404).json(new ApiError(404, "Post not found"));
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Post not found."));
   }
 
-  if (post.owner !== "teacher" || !post.owner_id.equals(teacher_id)) {
-    return res.status(403).json(new ApiError(403, "Only your own posts can be transformed into a batch."));
+  const batch = await postToBatch(post, teacher_id);
+  if (!batch) {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Failed to create batch."));
   }
 
-  try {
-    const batch = await postToBatch(post);
-    res.status(201).json(new ApiResponse(201, batch, "Batch created successfully"));
-  } catch (error) {
-    res.status(error.statusCode || 500).json(new ApiError(error.statusCode || 500, error.message));
-  }
+  res.status(201).json(new ApiResponse(201, batch, "Batch created successfully."));
 });
-
-const postTuition = asyncHandler(async (req, res) => {
-  const {
-    user: { _id: owner_id, role: owner },
-    body: {
-      subject,
-      class: className,
-      title,
-      subtitle = "",
-      description = "",
-      weekly_schedule = [],
-      time,
-      salary,
-      is_continuous,
-      is_batch,
-      max_size
-    }
-  } = req;
-
-  try {
-    const post = await Post.create({
-      owner_id,
-      owner,
-      subject,
-      class: className,
-      title,
-      subtitle,
-      description,
-      weekly_schedule,
-      time,
-      salary,
-      is_continuous,
-      is_batch,
-      max_size
-    });
-
-    // Start monitoring and keep track of the interval ID
-    const intervalID = setInterval(() => monitorBatchSize(post._id, intervalID), 3600000);
-
-    res
-      .status(201)
-      .json(new ApiResponse(201, post, "Post created successfully"));
-  } catch (error) {
-    res
-      .status(400)
-      .json(new ApiError(400, error.message || "Failed to create post"));
-  }
-});
-
-async function monitorBatchSize(post_id, intervalID) {
-  const post = await Post.findById(post_id);
-  if (!post) {
-    console.error("Post not found, stopping monitoring.");
-    return clearInterval(intervalID); // Stop if the post is gone
-  }
-
-  if (post.interested_students.length >= post.max_size) {
-    try {
-      const batch = await postToBatch(post);
-      await systemNotification(post.owner_id, `Post [${post._id}]'s capacity full. Batch [${batch._id}] created.`);
-      clearInterval(intervalID); // Stop once the batch is created
-    } catch (error) {
-      console.error(`Failed to create batch: ${error.message}`);
-    }
-  }
-}
-
-async function postToBatch(post) {
-  const student_ids = post.interested_students;
-
-  const batch = await Batch.create({
-    teacher_id: post.owner_id,
-    subject: post.subject,
-    class: post.class,
-    weekly_schedule: post.weekly_schedule,
-    time: post.time,
-    salary: post.salary,
-    is_continuous: post.is_continuous,
-    is_batch: post.is_batch,
-    student_ids
-  });
-
-  await Promise.all(student_ids.map(async (sid) => {
-    const student = await Student.findOne({ user_id: sid });
-    if (student) {
-      student.prev_courses.push(batch._id);
-      await student.save();
-    }
-  }));
-
-  await post.deleteOne();
-
-  return batch;
-}
-
 
 export {
   teacherDashboard,
-  postTuition,
-  updatePost,
 
-  deletePost,
   showInterest,
   cancelInterest,
 
   searchStudent,
-  removeStudentFromBatch,
-  addStudentToBatch,
 
-  createBatch
+  createBatch,
 };

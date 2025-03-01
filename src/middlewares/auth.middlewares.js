@@ -2,13 +2,16 @@ import jwt from "jsonwebtoken";
 import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 
-const verifyJWT = asyncHandler( async (req, _, next) => {
+const verifyJWT = asyncHandler( async (req, res, next) => {
   const token = req.cookies.accessToken || req.body.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
   if(!token){
-    throw new ApiError(401, "Unathorized");
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "Unathorized token"));
   }
 
   try {
@@ -17,14 +20,18 @@ const verifyJWT = asyncHandler( async (req, _, next) => {
     const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
 
     if(!user){
-      throw new ApiError(401, "Unathorized");
+      return res
+        .status(401)
+        .json(new ApiResponse(401, "Unathorized user"));
     }
 
     req.user = user;
     next()
 
   } catch (error) {
-    throw new ApiError(401, error?.message || "Invalid access token");
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, error?.message || "Invalid access token"));
   }
 });
 

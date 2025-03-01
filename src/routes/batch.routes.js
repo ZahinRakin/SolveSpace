@@ -1,25 +1,22 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
-import { 
-  createBatch,
-  removeStudentFromBatch,
-  addStudentToBatch,
-} from "../controllers/teacher.controllers.js";
 
-import { 
-  leaveBatch,
-  acceptTeacher,
+import { createBatch } from "../controllers/teacher.controllers.js";
+import { leaveBatch } from "../controllers/student.controllers.js";
+import {
+  addUserToBatch,
+  removeUserFromBatch,
   destroyBatch
-} from "../controllers/student.controllers.js";
+} from "../controllers/batch.controllers.js";
 
 const router = Router();
+//both
+router.route("/add-user/:batch_id/:user_id").post(verifyJWT, addUserToBatch);
+router.route("/remove-user/:batch_id/:user_id").delete(verifyJWT, removeUserFromBatch);
+router.route("/destroy/:id").delete(verifyJWT, destroyBatch);
 //student
-router.route("/accept-teacher/:id").post(verifyJWT, acceptTeacher);
-router.route("/leave-batch/:id").delete(verifyJWT, leaveBatch);
-router.route("/destroy-batch/:id").delete(verifyJWT, destroyBatch);
+router.route("/student/leave/:id").delete(verifyJWT, leaveBatch);
 //teacher
-router.route("/create-batch/:id").post(verifyJWT, createBatch);
-router.route("/remove-student/:id").delete(verifyJWT, removeStudentFromBatch);
-router.route("/add-student/:id").put(verifyJWT, addStudentToBatch);
+router.route("/teacher/create-batch/:id").post(verifyJWT, createBatch);
 
 export default router;

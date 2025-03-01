@@ -50,11 +50,12 @@ async function sendNotification(recieverID, senderID, message){
 async function systemNotification(recieverID, message) {
   try {
     const notifications = await Notification.create({
-      recieverID,
+      recieverId: recieverID,
+      senderID: null,
       message
     });
   } catch (error) {
-    throw new ApiError(error.statusCode, error.message);
+    console.error(error);
   }
 } 
 

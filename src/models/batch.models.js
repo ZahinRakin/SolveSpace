@@ -18,12 +18,14 @@ const batchSchema = new Schema({
     enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "hons", "masters"]
   },
   
-  weekly_schedule: {
-    type: String,
-    enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    required: true
-  },
-  
+  weekly_schedule: 
+  [
+    {
+      type: String,
+      enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      required: true
+    }
+  ],
   time: {
     type: String,
     required: true

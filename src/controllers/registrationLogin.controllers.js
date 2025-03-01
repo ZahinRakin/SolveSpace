@@ -61,7 +61,6 @@ const registerUser = asyncHandler(async (req, res) => {
   res.status(201).json(new ApiResponse(201, newUser.username, "Registration successful."));
 });
 
-
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password, rememberMe } = req.sanitizedData;
 
@@ -205,13 +204,11 @@ async function verifyResetToken(token) {
 async function generateAccessAndRefreshToken(userId) {
   try {
     const user = await User.findById(userId)
-    //small check for user existence
-
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
-    await user.save({validateBeforeSave: false}); //validateBeforeSave ?
+    await user.save({validateBeforeSave: false});
     return {accessToken, refreshToken};
 
   } catch (error) {
@@ -220,48 +217,61 @@ async function generateAccessAndRefreshToken(userId) {
 }
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken =
-    req.cookies.refreshToken ||
-    req.body.refreshToken ||
-    req.header("Authorization")?.replace("Bearer ", "");
-  
+  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken || req.header("Authorization")?.replace("Bearer ", "");
+
   if (!incomingRefreshToken || typeof incomingRefreshToken !== "string") {
-    throw new ApiError(400, "Invalid or missing refresh token.");
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Invalid or missing refresh token."));
   }
 
   try {
-    const decodedToken = jwt.verify(
-      incomingRefreshToken,
-      process.env.REFRESH_TOKEN_SECRET
-    );
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
 
     const user = await User.findById(decodedToken?._id);
 
     if (!user || incomingRefreshToken !== user.refreshToken) {
-      throw new ApiError(401, "Invalid or mismatched refresh token.");
+      return res
+        .status(401)
+        .json(new ApiResponse(401, null, "Invalid or mismatched refresh token."));
     }
 
-    const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(
-      user._id
-    );
+    const { accessToken, accessToken: newRefreshToken } = await generateAccessAndRefreshToken(user._id);
 
-    res.status(200).json({
-      accessToken,
-      refreshToken: newRefreshToken,
-      message: "Token refreshed successfully.",
-    });
+    let maxAge = 30 * 24 * 60 * 60 * 1000; //here I would have to process.
+    res
+      .cookie('refreshToken', newRefreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'Strict',
+          maxAge: maxAge
+        })
+      .setHeader('Authorization', `Bearer ${accessToken}`)
+      .status(200)
+      .json(new ApiResponse(200, user.username, "access token refreshed"));
   } catch (error) {
-    console.error("Error during token verification:", error);
-
-    if (error.name === "JsonWebTokenError") {
-      throw new ApiError(401, "Malformed or invalid token.");
-    } else if (error.name === "TokenExpiredError") {
-      throw new ApiError(401, "Token expired.");
-    } else {
-      throw new ApiError(500, "Server error while refreshing token.");
-    }
+    handleTokenVerificationError(error);
   }
 });
+
+function handleTokenVerificationError(error) {
+  if (error.name === "JsonWebTokenError") {
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "Malformed or invalid token."));
+  }
+
+  if (error.name === "TokenExpiredError") {
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "Token expired."));
+  }
+
+  return res
+    .status(500)
+    .json(new ApiResponse(500, null, "Server error while refreshing token."));
+}
+
 
 export { 
   registerUser, 

@@ -2,118 +2,16 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-import User from "../models/users.models.js";
 import Post from "../models/post.models.js";
 import Batch from "../models/batch.models.js";
 import Student from "../models/student.models.js";
 
+import { postToBatch } from "./post.controllers.js";
+import { systemNotification } from "./notification.controllers.js";
+
 
 const studentDashboard = asyncHandler(async (req, res) => {
   //here i will add recommended courses based on his previous courses.
-});
-
-const postRequest = asyncHandler(async (req, res) => {
-  const {
-    user: { _id : owner_id, role: owner },
-    body: {
-      subject,
-      class: className,
-      title,
-      subtitle = "",
-      description = "",
-      weekly_schedule,
-      time,
-      salary,
-      is_continuous,
-      max_size
-    }
-  } = req;
-
-  try {
-    const newPost = await Post.create({
-      owner_id,
-      owner,
-      subject,
-      class: className,
-      title,
-      subtitle,
-      description,
-      weekly_schedule,
-      time,
-      salary,
-      is_continuous,
-      is_batch: false,
-      max_size
-    });
-  
-    res
-      .status(201)
-      .json(new ApiResponse(201, "Post created successfully", newPost));
-  } catch (error) {
-    res
-      .status(400)
-      .json(new ApiError(400, error.message || "wasn't able to insert into the db."));
-  }
-
-});
-
-const updateRequest = asyncHandler(async (req, res) => {
-  const {
-    params: {
-      id: post_id
-    },
-    body: updates,
-    user: {
-      _id: user_id,
-      role
-    }
-  } = req;
-
-  const post = await Post.findById(post_id);
-  if (!post) {
-    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
-  }
-
-  if (!post.owner_id.equals(user_id) || post.owner !== "student") {
-    return res.status(403).json(new ApiError(403, "You don't have permission to update this post"));
-  }
-
-  const allowedUpdates = ["subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "is_batch", "max_size"];
-  const filteredUpdates = Object.keys(updates)
-    .filter(key => allowedUpdates.includes(key))
-    .reduce((obj, key) => {
-      obj[key] = updates[key];
-      return obj;
-    }, {});
-
-  if (Object.keys(filteredUpdates).length === 0) {
-    return res.status(400).json(new ApiError(400, "No valid updates provided"));
-  }
-
-  const updatedPost = await Post.findByIdAndUpdate(post_id, filteredUpdates, { new: true, runValidators: true });
-
-  res.status(200).json(new ApiResponse(200, updatedPost, "Post updated successfully"));
-});
-
-const deleteRequest = asyncHandler(async (req, res) => {
-  const { id: post_id } = req.params;
-  const { _id: user_id, role } = req.user;
-
-  const post = await Post.findById(post_id);
-
-  if (!post) {
-    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
-  }
-
-  if (!post.owner_id.equals(user_id) || post.owner !== role) {
-    return res
-      .status(403)
-      .json(new ApiError(403, "You don't have permission to delete this post"));
-  }
-
-  await post.deleteOne();
-
-  res.status(200).json(new ApiResponse(200, null, "Post deleted successfully"));
 });
 
 const applyToJoin = asyncHandler(async (req, res) => {
@@ -122,7 +20,8 @@ const applyToJoin = asyncHandler(async (req, res) => {
       id: post_id
     },
     user: {
-      _id: student_id
+      _id: student_id,
+      role
     }
   } = req;
 
@@ -133,11 +32,25 @@ const applyToJoin = asyncHandler(async (req, res) => {
       .status(404)
       .json(new ApiResponse(404, null, "Post not found"));
   }
-
-  if(post.interested_students.length >= post.max_size){
+  if(role === post.owner){
     return res
       .status(400)
-      .ApiResponse(400, null, "Batch is full.");
+      .json(new ApiResponse(400, null, "You can't join a post that is a student's post"));
+  }
+
+  const batch_size = post.interested_students.length + 1;
+  if(batch_size >= post.max_size){
+    try {
+      const batch = postToBatch(post, post.owner_id);
+      console.log("post[", post._id, "]is full. so batch[", batch._id ,"] is formed"); //test ofc
+      systemNotification(post.owner_id, `Your post[${post._id}] has filled. So it is now a batch[${batch._id}].`);
+
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Batch is full."));
+    } catch (error) {
+      throw new ApiError(error.statusCode, error.message);
+    }
   }
 
   if (post.interested_students.includes(student_id)) {
@@ -175,167 +88,135 @@ const cancelJoin = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, post, "Join request canceled successfully"));
 });
 
-//upto this point tested the APIs
-
 const acceptTeacher = asyncHandler(async (req, res) => {
-  try {
-    const {
-      params: { id: post_id },
-      body: { teacher_id },
-      user: { 
-        _id: student_id,
-        role
-      }
-    } = req;
+  const {
+    params: { post_id, teacher_id },
+    user: { _id: student_id, role }
+  } = req;
 
-    const post = await Post.findById(post_id);
-    if (!post) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, null, "Post not found"));
-    }
+  console.log(`Post ID: ${post_id} \nTeacher ID: ${teacher_id}`); // Debugging
 
-    const student = await Student.findOne({ user_id: student_id });
-    if (!student) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, null, "Student not found"));
-    }
-
-    if (post.owner !== role || !post.owner_id.equals(student_id)) {
-      return res
-        .status(403)
-        .json(new ApiResponse(403, null, "You don’t have permission to accept teachers for this post"));
-    }
-
-    if (!post.interested_teachers.includes(teacher_id)) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, null, "This teacher hasn't expressed interest in this post"));
-    }
-
-    const batch = await Batch.create({
-      teacher_id,
-      subject: post.subject,
-      class: post.class,
-      weekly_schedule: post.weekly_schedule,
-      time: post.time,
-      salary: post.salary,
-      is_continuous: post.is_continuous,
-      student_ids: [student_id]
-    });
-
-    student.prev_courses.push(batch._id);
-    await student.save();
-
-    await post.deleteOne();
-
-    res
-      .status(201)
-      .json(new ApiResponse(201, batch, "Batch created successfully"));
-  } catch (error) {
-    res
-      .status(500)
-      .json(new ApiResponse(500, null, "An unexpected error occurred"));
-  }
-});
-
-const destroyBatch = asyncHandler(async (req, res) => {
-  const { id: batch_id } = req.params;
-  const { _id: student_id } = req.user;
-
-  const batch = await Batch.findById(batch_id);
-  if (!batch) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "Batch not found"));
+  const post = await Post.findById(post_id);
+  if (!post) {
+    return res.status(404).json(new ApiResponse(404, null, "Post not found"));
   }
 
-  if (batch.owner === "student" && batch.owner_id.toString() === student_id.toString()) {
-    await batch.deleteOne(); // Deletes the batch
-    return res
-      .status(200)
-      .json(new ApiResponse(200, null, "Batch deleted successfully"));
-  } else {
-    return res
-      .status(403) // Permission issue
-      .json(new ApiError(403, "You don't have permission to delete this batch"));
-  }
-});
+  console.log(`Post: ${JSON.stringify(post)}`); // Debugging
 
-const leaveBatch = asyncHandler(async(req, res) => {
-  const { id: post_id } = req.params;
-  const { _id: student_id } = req.user;
-
-  const batch = await Batch.findById(post_id);
-
-  if (!batch) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, null, "Post not found"));
+  const student = await Student.findOne({ user_id: student_id }).select("prev_courses");
+  if (!student) {
+    return res.status(404).json(new ApiResponse(404, null, "Student not found"));
   }
 
-  const index = batch.student_ids.indexOf(student_id);
-  if (index === -1) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "You are not enrolled in this course"));
+  console.log(`Student: ${JSON.stringify(student)}`); // Debugging
+
+  if (post.owner !== role || !post.owner_id.equals(student_id)) {
+    return res.status(403).json(new ApiResponse(403, null, "You don’t have permission to accept teachers for this post"));
   }
 
-  batch.student_ids.splice(index, 1);
-  await batch.save();
+  if (!post.interested_teachers.includes(teacher_id)) {
+    return res.status(400).json(new ApiResponse(400, null, "This teacher hasn't expressed interest in this post"));
+  }
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, batch, "Successfully left the course"));
+  if (post.interested_students.includes(student_id)) {
+    return res.status(409).json(new ApiResponse(409, null, "You have already accepted this teacher for the post"));
+  }
+
+  post.interested_students.push(student_id);
+
+  const batch = await postToBatch(post, teacher_id);
+
+  student.prev_courses.push(batch._id);
+  await student.save();
+
+  res.status(201).json(new ApiResponse(201, batch, "Batch created successfully"));
 });
 
 const searchTeacher = asyncHandler(async (req, res) => {
   const {
-    user: { _id: student_id },
-    body: { subject, class: className, weekly_schedule, time, is_batch }
+    // user: { _id: student_id , role },
+    body: filter
   } = req;
 
-  const filter = {
-    owner: "teacher",
-    subject,
-    class: className,
-    weekly_schedule,
-    time
-  };
+  filter.owner = "teacher";
 
-  if (typeof is_batch !== 'undefined') {
-    filter.is_batch = is_batch;
-  }
+  const allowedFilters = ["owner" ,"subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
+  const sanitizedFilter = Object.keys(filter)
+    .filter(key => allowedFilters.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = filter[key];
+      return obj;
+    }, {});
 
-  const matched_posts = await Post.find(filter);
-
-  console.log(matched_posts); // test
+  const matched_posts = await Post
+    .find(sanitizedFilter)
+    .select("-owner_id -owner -interested_teachers -interested_students");;
 
   if (!matched_posts || matched_posts.length === 0) {
     return res
       .status(404)
-      .json(new ApiError(404, "No posts found"));
+      .json(new ApiResponse(404, null, "No posts found"));
   }
 
   res
     .status(200)
     .json(new ApiResponse(200, matched_posts, "Success"));
 });
+//all tested. everything works fine but dashboard. will do this later.
+const leaveBatch = asyncHandler(async (req, res) => {
+  const {
+    params: { id: batch_id },
+    user: { _id: user_id, role }
+  } = req;
 
+  const batch = await Batch.findById(batch_id);
+  if (!batch) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Batch not found"));
+  }
+
+  if (role === "student") {
+    const index = batch.student_ids.indexOf(user_id);
+    if (index === -1) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "You are not enrolled in this batch"));
+    }
+
+    batch.student_ids.splice(index, 1);
+
+    if (batch.student_ids.length === 0) {
+      await batch.deleteOne();
+      return res
+        .status(200)
+        .json(new ApiResponse(200, null, "Batch deleted as no students or teacher remain"));
+    }
+
+    await batch.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, batch, "Successfully left the batch"));
+  }
+  else if (role === "teacher") {
+    return res
+      .status(403)
+      .json(new ApiResponse(403, null, "Teachers cannot leave the batch. If needed, delete the batch instead."));
+  }
+
+  res
+    .status(400)
+    .json(new ApiResponse(400, null, "Invalid role"));
+});
 
 export {
   studentDashboard,
-  postRequest,
-  updateRequest,
-  
-  deleteRequest,
-  acceptTeacher,
-  destroyBatch,
-
   applyToJoin,
   cancelJoin,
+
+  acceptTeacher,
   searchTeacher,
-  
+
   leaveBatch
 };
