@@ -1,13 +1,13 @@
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiResponse } from "../utils/ApiResponse";
-import Batch from "../models/batch.models";
-import User from "../models/users.models";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import Batch from "../models/batch.models.js";
+import User from "../models/users.models.js";
 
-import { systemNotification } from "./notification.controllers";
+import { systemNotification } from "./notification.controllers.js";
 
 
 
-const addUserToBatch = asyncHandler(async (req, res) => {
+const addUserToBatch = asyncHandler(async (req, res) => { // I have to consider the batch_size factor. if possible. not that important. I think.
   const {
     params: { batch_id, user_id },
     user: { _id: owner_id }
@@ -69,15 +69,15 @@ const removeUserFromBatch = asyncHandler(async (req, res) => {
 const destroyBatch = asyncHandler(async (req, res) => {
   const {
     params: { id: batch_id },
-    user: { _id: owner_id }
+    user: { _id: owner_id, role }
   } = req;
 
   const batch = await Batch.findById(batch_id).select("owner_id student_ids");
   if (!batch) {
     return res.status(404).json(new ApiResponse(404, null, "Batch not found"));
   }
-  if (!batch.owner_id.equals(owner_id)) {
-    return res.status(403).json(new ApiResponse(403, null, "You don't own the batch"));
+  if (role !== "teacher" && !batch.owner_id.equals(owner_id)) {
+    return res.status(403).json(new ApiResponse(403, null, "You don't own the batch and you are not the teacher of the batch."));
   }
 
   const student_ids = batch.student_ids;
@@ -94,6 +94,39 @@ const destroyBatch = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, "Batch successfully deleted"));
 });
 
+const updateBatch = asyncHandler(async (req, res) => {
+  const {
+    params: { id: batch_id },
+    user: { _id: owner_id },
+    body: updates
+  } = req;
+
+  const allowedUpdates = ["teacher_id", "subject", "class", "weekly_schedule", "time", "salary", "is_continuous", "is_batch"];
+  const filteredUpdates = Object.keys(updates)
+    .filter(key => allowedUpdates.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = updates[key];
+      return obj;
+    }, {});
+
+  const batch = await Batch.findById(batch_id);
+  if (!batch) {
+    return res.status(404).json(new ApiResponse(404, null, "Batch not found"));
+  }
+  if (!batch.owner_id.equals(owner_id)) {
+    return res.status(403).json(new ApiResponse(403, null, "You don't own the batch"));
+  }
+
+  batch.set(filteredUpdates);
+
+  try {
+    await batch.save();
+    res.status(200).json(new ApiResponse(200, batch, "Batch updated successfully"));
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, null, error.message));
+  }
+});
+
 const paymentSystem = asyncHandler(async(req, res) => {
   //have to do something is order to do the payment thing.
 });
@@ -101,5 +134,6 @@ const paymentSystem = asyncHandler(async(req, res) => {
 export {
   addUserToBatch,
   removeUserFromBatch,
-  destroyBatch
+  destroyBatch,
+  updateBatch
 }

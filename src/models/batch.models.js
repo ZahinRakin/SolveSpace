@@ -1,6 +1,16 @@
 import mongoose, { Schema } from "mongoose";
 
 const batchSchema = new Schema({
+  owner_id: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  owner: {
+    type: String,
+    enum: ["teacher", "student"],
+    required: true
+  },
   teacher_id: {
     type: Schema.Types.ObjectId,
     ref: "User",

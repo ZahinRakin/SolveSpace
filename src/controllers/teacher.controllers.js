@@ -108,7 +108,7 @@ const searchStudent = asyncHandler(async (req, res) => {
 
 const createBatch = asyncHandler(async (req, res) => {
   const {
-    params: { id: post_id },
+    params: { post_id },
     user: { _id: teacher_id, role }
   } = req;
 

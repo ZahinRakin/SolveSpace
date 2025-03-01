@@ -38,21 +38,6 @@ const applyToJoin = asyncHandler(async (req, res) => {
       .json(new ApiResponse(400, null, "You can't join a post that is a student's post"));
   }
 
-  const batch_size = post.interested_students.length + 1;
-  if(batch_size >= post.max_size){
-    try {
-      const batch = postToBatch(post, post.owner_id);
-      console.log("post[", post._id, "]is full. so batch[", batch._id ,"] is formed"); //test ofc
-      systemNotification(post.owner_id, `Your post[${post._id}] has filled. So it is now a batch[${batch._id}].`);
-
-      return res
-        .status(400)
-        .json(new ApiResponse(400, null, "Batch is full."));
-    } catch (error) {
-      throw new ApiError(error.statusCode, error.message);
-    }
-  }
-
   if (post.interested_students.includes(student_id)) {
     return res
       .status(400)
@@ -62,9 +47,25 @@ const applyToJoin = asyncHandler(async (req, res) => {
   post.interested_students.push(student_id);
   await post.save();
 
+  const batch_size = post.interested_students.length + 1;
+  if(batch_size >= post.max_size){
+    try {
+      const batch = await postToBatch(post, post.owner_id);
+      await systemNotification(post.owner_id, `Your post[${post._id}] has filled. So it is now a batch[${batch._id}].`);
+
+      return res
+        .status(200)
+        .json(new ApiResponse(200, null, "joined successfully."));
+    } catch (error) {
+      res
+        .status(error.statusCode)
+        .json(new ApiResponse(error.statusCode, null, error.message));
+    }
+  }
+
   res
     .status(200)
-    .json(new ApiResponse(200, post, "Join request sent successfully"));
+    .json(new ApiResponse(200, post, "Joined successfully"));
 });
 
 const cancelJoin = asyncHandler(async (req, res) => {
@@ -94,21 +95,15 @@ const acceptTeacher = asyncHandler(async (req, res) => {
     user: { _id: student_id, role }
   } = req;
 
-  console.log(`Post ID: ${post_id} \nTeacher ID: ${teacher_id}`); // Debugging
-
   const post = await Post.findById(post_id);
   if (!post) {
     return res.status(404).json(new ApiResponse(404, null, "Post not found"));
   }
 
-  console.log(`Post: ${JSON.stringify(post)}`); // Debugging
-
   const student = await Student.findOne({ user_id: student_id }).select("prev_courses");
   if (!student) {
     return res.status(404).json(new ApiResponse(404, null, "Student not found"));
   }
-
-  console.log(`Student: ${JSON.stringify(student)}`); // Debugging
 
   if (post.owner !== role || !post.owner_id.equals(student_id)) {
     return res.status(403).json(new ApiResponse(403, null, "You don’t have permission to accept teachers for this post"));
@@ -190,16 +185,22 @@ const leaveBatch = asyncHandler(async (req, res) => {
       await batch.deleteOne();
       return res
         .status(200)
-        .json(new ApiResponse(200, null, "Batch deleted as no students or teacher remain"));
+        .json(new ApiResponse(200, null, "Batch deleted as no students remain"));
+    }
+
+    let message = "";
+    if(batch.owner_id.equals(user_id)){
+      batch.owner = "teacher";
+      batch.owner_id = batch.teacher_id;
+      message = "Since the owner of the batch has left. the new owner is the teacher.";
     }
 
     await batch.save();
 
     return res
       .status(200)
-      .json(new ApiResponse(200, batch, "Successfully left the batch"));
-  }
-  else if (role === "teacher") {
+      .json(new ApiResponse(200, batch, "Successfully left the batch" || message));
+  } else if (role === "teacher") {
     return res
       .status(403)
       .json(new ApiResponse(403, null, "Teachers cannot leave the batch. If needed, delete the batch instead."));

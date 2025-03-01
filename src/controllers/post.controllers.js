@@ -13,6 +13,8 @@ const createPost = asyncHandler(async (req, res) => {
     user: { _id: owner_id, role: owner },
     body: postInfo
   } = req;
+  postInfo.owner_id = owner_id;
+  postInfo.owner = owner;
 
   const postFilter = ["owner_id", "owner", "subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
 
@@ -111,6 +113,8 @@ async function postToBatch(post, teacher_id) {
   const student_ids = post.interested_students;
 
   const batch = await Batch.create({
+    owner_id: post.owner_id,
+    owner: post.owner,
     teacher_id,
     subject: post.subject,
     class: post.class,

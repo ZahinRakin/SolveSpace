@@ -6,17 +6,19 @@ import { leaveBatch } from "../controllers/student.controllers.js";
 import {
   addUserToBatch,
   removeUserFromBatch,
-  destroyBatch
+  destroyBatch,
+  updateBatch
 } from "../controllers/batch.controllers.js";
 
 const router = Router();
 //both
-router.route("/add-user/:batch_id/:user_id").post(verifyJWT, addUserToBatch);
-router.route("/remove-user/:batch_id/:user_id").delete(verifyJWT, removeUserFromBatch);
-router.route("/destroy/:id").delete(verifyJWT, destroyBatch);
+router.route("/add-user/:batch_id/:user_id").post(verifyJWT, addUserToBatch); //tested (teacher)
+router.route("/remove-user/:batch_id/:user_id").delete(verifyJWT, removeUserFromBatch); //tested (teacher)
+router.route("/destroy/:id").delete(verifyJWT, destroyBatch); //tested (teacher)
+router.route("/update/:id").put(verifyJWT, updateBatch); //tested (student)
 //student
-router.route("/student/leave/:id").delete(verifyJWT, leaveBatch);
+router.route("/student/leave/:id").delete(verifyJWT, leaveBatch); //tested (student(only one))
 //teacher
-router.route("/teacher/create-batch/:id").post(verifyJWT, createBatch);
+router.route("/teacher/create-batch/:post_id").post(verifyJWT, createBatch); //tested (teacher (post with 0 students))
 
 export default router;
