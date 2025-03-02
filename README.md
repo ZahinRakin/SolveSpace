@@ -20,3 +20,7 @@ This is the SPL-2 project of our team.
 4. [react-router](https://reactrouter.com/en/main/start/tutorial)
 5. express for backend
 6. tailwind css
+
+
+# github [ZahinRakin](https://github.com/ZahinRakin)
+# github [Shakibbhai](https://github.com/Shakibbhai)
