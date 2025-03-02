@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import StudentDashboardHeader from "./StudentDashboardHeader"
+import StudentDashboardHeader from "./StudentDashboardHeader.jsx";
+import handleLogout from "../../utils/HandleLogout.jsx";
 
 function StudentDashboard() {
   const [availableTuition, setAvailableTuition] = useState([

@@ -1,44 +1,29 @@
-
-
-//this file has handled the refresh access token part as well. although the notifications api isn't built yet. soon it will be done.
-
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function NotificationPage() {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([
-    {
-      title: "first message",
-      body: "this is the body",
-      time: "10.30",
-      isViewed: false,
-    },
-    {
-      title: "second message",
-      body: "this is the body",
-      time: "11.30",
-      isViewed: true,
-    },
-    {
-      title: "third message",
-      body: "this is the body",
-      time: "12.30",
-      isViewed: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
-  // Function to fetch notifications
+  // Fetch notifications
   const fetchNotifications = async (accessToken) => {
     try {
-      const response = await axios.get("/api/v1/notification/get-notification", {
+      const response = await axios.get("/api/v1/notifications/getnotifications", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setNotifications(response.data.notifications); // Assuming `notifications` is the field in the response
+
+      const formattedNotifications = response.data.data.map((notification) => ({
+        id: notification._id, // Store notification ID for deletion
+        title: "New Message",
+        body: notification.message,
+        time: new Date(notification.createdAt).toLocaleString(),
+        isViewed: notification.isRead,
+      }));
+
+      setNotifications(formattedNotifications);
     } catch (error) {
       if (error.response?.status === 401) {
-        // Handle token refresh if accessToken is invalid
         await handleRefreshToken();
       } else {
         console.error("Error fetching notifications:", error);
@@ -46,16 +31,33 @@ function NotificationPage() {
     }
   };
 
-  // Function to refresh accessToken
+  // Delete a notification
+  const deleteNotification = async (notificationId) => {
+    const accessToken = localStorage.getItem("accessToken");
+    try {
+      const response = await axios.delete("/api/v1/notifications/delete-path", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        data: { notificationId }, // Sending the notification ID in the request body
+      });
+
+      if (response.status === 200) {
+        setNotifications(notifications.filter((n) => n.id !== notificationId)); // Remove from UI
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  };
+
+  // Refresh access token if needed
   const handleRefreshToken = async () => {
     const accessToken = localStorage.getItem("accessToken");
     try {
       const response = await axios.get("/api/v1/refresh-accesstoken", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      const newAccessToken = response.data.newAccessToken; // Assuming backend returns the new access token
-      localStorage.setItem("accessToken", newAccessToken); // Update localStorage
-      await fetchNotifications(newAccessToken); // Retry fetching notifications
+      const newAccessToken = response.data.newAccessToken;
+      localStorage.setItem("accessToken", newAccessToken);
+      await fetchNotifications(newAccessToken);
     } catch (error) {
       console.error("Error refreshing access token:", error);
       navigate('/login');
@@ -64,13 +66,12 @@ function NotificationPage() {
 
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
-    // if (accessToken) {
-    //   fetchNotifications(accessToken);
-    // } else {
-    //   console.error("No access token found. Redirecting to login...");
-    //   navigate('/login');
-    // }
-    console.log(accessToken) //////////////dummy print.
+    if (accessToken) {
+      fetchNotifications(accessToken);
+    } else {
+      console.error("No access token found. Redirecting to login...");
+      navigate('/login');
+    }
   }, []);
 
   return (
@@ -88,18 +89,30 @@ function NotificationPage() {
 
       {/* Notifications List */}
       <ul className="space-y-4">
-        {notifications.map((notification, index) => (
-          <li
-            key={index}
-            className={`p-4 rounded shadow-md ${
-              notification.isViewed ? "bg-gray-100" : "bg-white"
-            }`}
-          >
-            <h2 className="text-lg font-bold">{notification.title}</h2>
-            <p className="text-sm text-gray-600">{notification.body}</p>
-            <p className="text-xs text-gray-500">{notification.time}</p>
-          </li>
-        ))}
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <li
+              key={notification.id}
+              className={`p-4 rounded shadow-md flex justify-between items-center ${
+                notification.isViewed ? "bg-gray-100" : "bg-white"
+              }`}
+            >
+              <div>
+                <h2 className="text-lg font-bold">{notification.title}</h2>
+                <p className="text-sm text-gray-600">{notification.body}</p>
+                <p className="text-xs text-gray-500">{notification.time}</p>
+              </div>
+              <button
+                onClick={() => deleteNotification(notification.id)}
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </li>
+          ))
+        ) : (
+          <p className="text-gray-500">No notifications found.</p>
+        )}
       </ul>
     </div>
   );

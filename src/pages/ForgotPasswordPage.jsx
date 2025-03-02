@@ -5,6 +5,7 @@ import axios from "axios";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -12,20 +13,17 @@ export default function ForgotPasswordPage() {
     setEmail(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Mock API call
-    axios.post('/api/v1/forget-password', {"email": email})
-      .then(_ => {
-        setMessage(
-          "If this email is registered, you'll receive a password reset link shortly."
-        );
-        navigate('/reset-password'); 
-      })
-      .catch(error => {
-        console.log(error);
-      })
+    try {
+      const response = await axios.post('/api/v1/forget-password', { email });
+      setMessage("If this email is registered, you'll receive a password reset link shortly.");
+      setErrorMessage(""); // Clear error message on success
+      navigate('/reset-password');
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || "Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -34,6 +32,7 @@ export default function ForgotPasswordPage() {
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-4">
           Forgot Password
         </h1>
+        {errorMessage && <p className="text-center text-red-500">{errorMessage}</p>}
         {message ? (
           <p className="text-center text-green-600">{message}</p>
         ) : (

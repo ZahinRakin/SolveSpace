@@ -6,8 +6,10 @@ function ResetPasswordPage() {
     const [formData, setFormData] = useState({
         token: "",
         newPassword: "",
-        confirmNewPassword: "",
+        confirmNewPassword: ""
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
@@ -15,8 +17,12 @@ function ResetPasswordPage() {
         const { name, value } = e.target;
         setFormData({
             ...formData,
-            [name]: value,
+            [name]: value
         });
+    };
+
+    const toggleShowPassword = () => {
+        setShowPassword(!showPassword);
     };
 
     const handleSubmit = async (e) => {
@@ -24,25 +30,26 @@ function ResetPasswordPage() {
         const { token, newPassword, confirmNewPassword } = formData;
 
         if (newPassword !== confirmNewPassword) {
-            alert("Passwords do not match");
+            setError("Passwords do not match");
             return;
         }
 
-        axios.post('/api/v1/reset-password', { token, newPassword })
-            .then(_ => {
-                alert("Password reset successful!");
-                navigate('/login');
-            })
-            .catch(error => {
-                console.error(error);
-                alert("Failed to reset password. Please try again later.");
-            });
+        try {
+            console.log("control reached here"); //test ofc
+            await axios.post('/api/v1/reset-password', { token, newPassword });
+            alert("Password reset successful!");
+            navigate('/login');
+        } catch (error) {
+            console.error(error);
+            setError(error.response?.data?.message || "Failed to reset password. Please try again later.");
+        }
     };
 
     return (
         <div className="flex justify-center items-center h-screen">
             <div className="w-full max-w-md border border-gray-300 rounded-lg shadow-lg p-6">
                 <h2 className="text-xl font-semibold mb-4 text-center">Reset Password</h2>
+                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <label htmlFor="token" className="block text-sm font-medium mb-1">
@@ -64,7 +71,7 @@ function ResetPasswordPage() {
                             New Password
                         </label>
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             id="newPassword"
                             name="newPassword"
                             value={formData.newPassword}
@@ -79,7 +86,7 @@ function ResetPasswordPage() {
                             Confirm New Password
                         </label>
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             id="confirmNewPassword"
                             name="confirmNewPassword"
                             value={formData.confirmNewPassword}
@@ -87,6 +94,17 @@ function ResetPasswordPage() {
                             className="w-full border border-gray-300 rounded-lg px-3 py-2"
                             required
                         />
+                    </div>
+
+                    <div className="flex items-center mb-4">
+                        <input
+                            type="checkbox"
+                            id="showPassword"
+                            checked={showPassword}
+                            onChange={toggleShowPassword}
+                            className="mr-2"
+                        />
+                        <label htmlFor="showPassword" className="text-sm">Show Passwords</label>
                     </div>
 
                     <button

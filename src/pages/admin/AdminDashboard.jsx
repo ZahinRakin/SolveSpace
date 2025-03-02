@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { FaUserCircle, FaBell, FaSearch, FaUsersCog, FaClipboardList } from "react-icons/fa";
-import Logout from "../../component/Logout";
+import { FaUserCircle, FaBell, FaSearch } from "react-icons/fa";
+import handleLogout from "../../utils/HandleLogout.jsx";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState([
     "A new user has registered.",
@@ -114,11 +116,12 @@ export default function AdminDashboard() {
                     </button>
                   </li>
                   <li>
-                    <div
+                    <button
                       className="w-full text-left hover:text-indigo-600"
+                      onClick={() => handleLogout(navigate)}
                     >
-                      <Logout/>
-                    </div>
+                      Logout
+                    </button>
                   </li>
                 </ul>
               </div>

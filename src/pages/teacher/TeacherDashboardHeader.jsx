@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
-import Logout from "../../component/Logout";
+import { Link, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaBell } from "react-icons/fa";
 import { useState } from "react";
+import handleLogout from "../../utils/HandleLogout.jsx";
 
 function TeacherDashboardHeader() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <header className="bg-white shadow-md p-12 px-24 flex justify-between items-center">
@@ -57,26 +58,29 @@ function TeacherDashboardHeader() {
             >
               <ul className="space-y-3">
                 <li>
-                  <button
-                    className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
-                  >
-                    <Link to="/viewprofile">
-                      View Profile
-                    </Link>
-                  </button>
+                  <Link to="/viewprofile">
+                    <button
+                      className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
+                    >
+                        View Profile
+                    </button>
+                  </Link>
                 </li>
                 <li>
-                  <button
-                    className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
-                  >
-                    <Link to="/viewprofile">
-                      Edit Profile
-                    </Link>
-                  </button>
+                  <Link to="/viewprofile">
+                    <button
+                      className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
+                    >
+                        Edit Profile
+                    </button>
+                  </Link>
                 </li>
                 <li>
-                  <div className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg">
-                    <Logout />
+                  <div 
+                    className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
+                    onClick={() => handleLogout(navigate)}
+                  >
+                    Logout
                   </div>
                 </li>
               </ul>

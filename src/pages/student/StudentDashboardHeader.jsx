@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
-import Logout from "../../component/Logout";
+import { Link, useNavigate } from "react-router-dom";
 import { FaUserCircle, FaBell } from "react-icons/fa";
 import { useState } from "react";
+import handleLogout from "../../utils/HandleLogout";
 
 function StudentDashboardHeader() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <header className="bg-white shadow-md p-12 px-24 flex justify-between items-center">
@@ -75,8 +76,11 @@ function StudentDashboardHeader() {
                   </button>
                 </li>
                 <li>
-                  <div className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg">
-                    <Logout />
+                  <div 
+                    className="block w-full text-left text-gray-800 hover:bg-indigo-50 p-2 rounded-lg"
+                    onClick={() => handleLogout(navigate)}
+                  >
+                    logout
                   </div>
                 </li>
               </ul>

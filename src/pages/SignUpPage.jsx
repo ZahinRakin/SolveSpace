@@ -52,7 +52,7 @@ export default function SignUpPage() {
       "role": `${formData.role}`
     }
     
-    axios.post('/api/v1/users/register', formdata_)
+    axios.post('/api/v1/register', formdata_)
       .then(response => {
         if(response.status === 201){ //this is the response that will 
           navigate('/login');

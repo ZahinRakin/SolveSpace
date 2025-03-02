@@ -3,7 +3,6 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./component/Layout";
 import LandingPage from "./component/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import Logout from "./component/Logout";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import SignUpPage from "./pages/SignUpPage";
 import ErrorPage from "./pages/ErrorPage";
@@ -36,10 +35,7 @@ const router = createBrowserRouter([
   },{
     path: "/login",
     element: <LoginPage />
-  },{
-    path: "/logout",
-    element: <Logout />
-  },{
+  },{ //no need for a path to logout.
     path: "/signup",
     element: <SignUpPage />
   },{
