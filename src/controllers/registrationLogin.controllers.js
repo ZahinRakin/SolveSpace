@@ -126,10 +126,10 @@ const logoutUser = asyncHandler( async (req, res) => {
 const forgetPassword = asyncHandler(async (req, res) => {
   const email = req.body.email;
 
-  const user = await User.findOne({ email });
-  
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const resetTokenExpiry = Date.now() + 3600000;
+  const user = await User.findOne({ email }).select("resetPasswordToken resetPasswordExpires");
+
+  const resetToken = await crypto.randomBytes(32).toString('hex');
+  const resetTokenExpiry = await Date.now() + 3600000;
 
   let response = "";
   
@@ -138,44 +138,69 @@ const forgetPassword = asyncHandler(async (req, res) => {
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
 
+
     const body = `
       <p>You requested a password reset.</p>
       <p>Copy and paste this link in the to reset your password:</p>
       <div>${resetToken}</div>
       <p>This link will expire in 1 hour.</p>
     `;
-    sendEmail(email,'Password Reset Request.', body);
+    await sendEmail(email,'Password Reset Request.', body);
     response = "Password reset token has been sent to you email";
   } else {
     response = "There is no account with this email";
   }
 
-  res.json({ 
-    message: response
-  });
+  res
+    .status(200)
+    .json({ 
+      message: response
+    });
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body;
+  console.log("Received token and password:", token, newPassword); // Debugging log
+
+  if (!token || !newPassword) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Token and new password are required."));
+  }
 
   try {
     const user = await verifyResetToken(token);
+    console.log("User found, proceeding with password reset."); // Debugging log
+
     user.password = newPassword;
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
-    const email = user.email;
+
     await user.save();
+    console.log("User password updated and saved."); // Debugging log
 
-    sendEmail(
-      email, 
-      'Password Reset Successful', 
+    await sendEmail(
+      user.email,
+      "Password Reset Successful",
       `<p>Your password has been successfully reset.</p>
-      <p>If you didn't make this change, please contact support immediately.</p>`
-    ,);
+       <p>If you didn't make this change, please contact support immediately.</p>`
+    );
 
-    res.json({ message: 'Password reset successful' });
+    res
+      .status(200)
+      .json(new ApiResponse(200, null, "Password reset successful."));
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error during password reset:", error); // More helpful in production
+
+    res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.message || "An unexpected error occurred."
+        )
+      );
   }
 });
 
@@ -183,23 +208,23 @@ async function verifyResetToken(token) {
   if (!token) {
     throw new ApiError({
       statusCode: 400,
-      message: "Invalid token!"
+      message: "Reset token is required!",
     });
   }
+
   const user = await User.findOne({
     resetPasswordToken: token,
-    resetPasswordExpires: { $gt: Date.now() }
-  });
-  
-  if (!user) {
+  }).select("email resetPasswordExpires");
+
+  if (!user || user.resetPasswordExpires < Date.now()) {
     throw new ApiError({
       statusCode: 400,
-      message: 'Invalid or expired reset token'
+      message: "Invalid or expired reset token!",
     });
   }
-  
+
   return user;
-};
+}
 
 async function generateAccessAndRefreshToken(userId) {
   try {
