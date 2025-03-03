@@ -107,6 +107,13 @@ const deletePost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Post deleted successfully"));
 });
 
+const getYourPosts = asyncHandler(async(req, res) => {
+  const { _id: user_id, role } = req.user;
+  const userPosts = await Post.find({owner_id: user_id, owner: role});
+  res
+    .status(200)
+    .json(new ApiResponse(200, userPosts, "success"));
+});
 
 
 async function postToBatch(post, teacher_id) {
@@ -163,6 +170,7 @@ export {
   createPost,
   updatePost,
   deletePost,
+  getYourPosts,
 
 
   postToBatch,

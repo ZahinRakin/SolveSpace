@@ -160,7 +160,6 @@ const forgetPassword = asyncHandler(async (req, res) => {
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body;
-  console.log("Received token and password:", token, newPassword); // Debugging log
 
   if (!token || !newPassword) {
     return res
@@ -170,14 +169,12 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   try {
     const user = await verifyResetToken(token);
-    console.log("User found, proceeding with password reset."); // Debugging log
 
     user.password = newPassword;
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
 
     await user.save();
-    console.log("User password updated and saved."); // Debugging log
 
     await sendEmail(
       user.email,
@@ -190,7 +187,6 @@ const resetPassword = asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, null, "Password reset successful."));
   } catch (error) {
-    console.error("Error during password reset:", error); // More helpful in production
 
     res
       .status(error.statusCode || 500)
@@ -273,7 +269,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         })
       .setHeader('Authorization', `Bearer ${accessToken}`)
       .status(200)
-      .json(new ApiResponse(200, user.username, "access token refreshed"));
+      .json(new ApiResponse(200, {accessToken: accessToken}, "access token refreshed"));
   } catch (error) {
     handleTokenVerificationError(error);
   }

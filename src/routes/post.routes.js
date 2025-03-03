@@ -3,7 +3,8 @@ import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import {
   createPost,
   updatePost,
-  deletePost
+  deletePost,
+  getYourPosts
 } from "../controllers/post.controllers.js";
 import { 
   showInterest,
@@ -23,6 +24,7 @@ const router = Router();
 router.route("/create").post(verifyJWT, createPost); //tested
 router.route("/update/:id").put(verifyJWT, updatePost); //tested
 router.route("/delete/:id").delete(verifyJWT, deletePost); //tested
+router.route("/posts").get(verifyJWT, getYourPosts);
 //teacher
 router.route("/teacher/apply/:id").post(verifyJWT, showInterest); //tested
 router.route("/teacher/retract/:id").delete(verifyJWT, cancelInterest); //tested

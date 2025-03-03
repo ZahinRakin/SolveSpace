@@ -72,18 +72,12 @@ const cancelInterest = asyncHandler(async (req, res) => {
 });
 
 const searchStudent = asyncHandler(async (req, res) => {
-  const {
-    // user: { _id: teacher_id },
-    body: filter
-  } = req;
-
+  const filter = req.query;
   filter.owner = "student";
-
   
-
   const allowedFilters = ["owner" ,"subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
   const sanitizedFilter = Object.keys(filter)
-    .filter(key => allowedFilters.includes(key))
+    .filter(key => allowedFilters.includes(key)&&filter[key])
     .reduce((obj, key) => {
       obj[key] = filter[key];
       return obj;
@@ -92,7 +86,7 @@ const searchStudent = asyncHandler(async (req, res) => {
   const matched_posts = await Post
     .find(sanitizedFilter)
     .select("-owner_id -owner -interested_teachers -interested_students");
-
+  
   if (!matched_posts || matched_posts.length === 0) {
     return res
       .status(404)
@@ -103,8 +97,6 @@ const searchStudent = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, matched_posts, "Success"));
 });
-
-//upto this point tested the APIs
 
 const createBatch = asyncHandler(async (req, res) => {
   const {
