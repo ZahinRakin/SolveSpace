@@ -127,6 +127,35 @@ const updateBatch = asyncHandler(async (req, res) => {
   }
 });
 
+const getYourBatches = asyncHandler(async (req, res) => {
+  try {
+    const { _id: user_id } = req.user;
+
+    const yourBatches = await Batch.find({ owner_id: user_id});
+
+    const batchesYouBelong = await Batch.find({
+      $and: [
+        {
+          $or: [
+            { teacher_id: user_id }, 
+            { student_ids: user_id }
+          ]
+        },
+        { owner_id: { $ne: user_id } }
+      ]
+    });
+
+    const data = {
+      own: yourBatches,
+      partOf: batchesYouBelong,
+    };
+
+    res.status(200).json(new ApiResponse(200, data, "success"));
+  } catch (error) {
+    res.status(500).json(new ApiResponse(500, null, "Server Error"));
+  }
+});
+
 const paymentSystem = asyncHandler(async(req, res) => {
   //have to do something is order to do the payment thing.
 });
@@ -135,5 +164,6 @@ export {
   addUserToBatch,
   removeUserFromBatch,
   destroyBatch,
-  updateBatch
+  updateBatch,
+  getYourBatches
 }

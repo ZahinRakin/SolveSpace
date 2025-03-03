@@ -8,10 +8,45 @@ import {
 
 import Batch from "../models/batch.models.js";
 import Post from "../models/post.models.js";
+import Rating from "../models/rating.models.js";
 
 
 const teacherDashboard = asyncHandler(async (req, res) => {
-  //yet to implement 
+  const { id: teacherId, role } = req.user;
+
+  if (role !== "teacher") {
+    throw new ApiError(403, "Access denied");
+  }
+
+  console.log("at least came here"); //test ofc
+
+  try {
+    // Fetch teacher's ratings
+    const ratings = await Rating.find({ rateeId: teacherId });
+
+    if (!ratings.length) {
+      return res.json(new ApiResponse(200, { averageRating: 0, ratingDistribution: {}, reviews: [] }, "No ratings yet"));
+    }
+
+    // Calculate average rating
+    const totalRatings = ratings.length;
+    const averageRating = (ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings).toFixed(1);
+
+    // Count ratings per star
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    ratings.forEach(r => ratingDistribution[r.rating]++);
+
+    // Get latest reviews
+    const reviews = ratings.slice(-5).map(r => ({
+      reviewerId: r.raterId,
+      rating: r.rating,
+      review: r.review
+    }));
+
+    res.json(new ApiResponse(200, { averageRating, ratingDistribution, reviews }, "Success"));
+  } catch (error) {
+    throw new ApiError(500, "Failed to fetch teacher dashboard data");
+  }
 });
 
 const showInterest = asyncHandler(async (req, res) => {

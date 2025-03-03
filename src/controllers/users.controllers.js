@@ -81,8 +81,16 @@ const deleteAccount = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "account deleted", "success"));
 });
 
+const getUser = asyncHandler(async (req, res) => {
+  console.log("at least this has been touched.");
+  const {id: user_id} = req.params;
+  const user = await User.findById(user_id);
+  res.status(200).json(new ApiResponse(200, user, "success"));
+})
+
 export {
   deleteAccount,
   viewProfile,
-  updateProfile
+  updateProfile,
+  getUser
 }

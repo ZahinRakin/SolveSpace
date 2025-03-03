@@ -11,8 +11,43 @@ import { systemNotification } from "./notification.controllers.js";
 
 
 const studentDashboard = asyncHandler(async (req, res) => {
-  //here i will add recommended courses based on his previous courses.
+  const { id: student_id, role } = req.user;
+  
+  if (role === "student") {
+    const recommendation = await recommendedCourses(student_id);
+    return res.status(200).json(new ApiResponse(200, recommendation, "success")); 
+  }
+  
+  return res.status(403).json(new ApiResponse(403, null, "Access denied"));
 });
+
+async function recommendedCourses(studentId) {
+  try {
+    // Get the student's previous courses (handle case where student record doesn't exist)
+    const student = await Student.findOne({ user_id: studentId }).populate("prev_courses");
+    const prevCourseIds = student?.prev_courses?.map(course => course._id) || [];
+
+    // Get highest-rated teachers (e.g., top 5)
+    const topTeachers = await Rating.aggregate([
+      { $group: { _id: "$rateeId", avgRating: { $avg: "$rating" } } },
+      { $sort: { avgRating: -1 } },
+      { $limit: 5 }
+    ]);
+
+    const teacherIds = topTeachers.map(t => t._id);
+
+    // Fetch recommended courses: priority to teachers + relevant subjects
+    const recommendedCourses = await Post.find({
+      owner_id: { $in: teacherIds },
+      _id: { $nin: prevCourseIds } // Exclude courses student already took
+    }).populate("owner_id", "firstname lastname");
+
+    return recommendedCourses;
+  } catch (error) {
+    console.error("Error fetching recommended courses:", error);
+    throw new Error("Failed to fetch recommended courses");
+  }
+}
 
 const applyToJoin = asyncHandler(async (req, res) => {
   const {
@@ -157,7 +192,6 @@ const searchTeacher = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, matched_posts, "Success"));
 });
-//all tested. everything works fine but dashboard. will do this later.
 const leaveBatch = asyncHandler(async (req, res) => {
   const {
     params: { id: batch_id },
@@ -210,6 +244,7 @@ const leaveBatch = asyncHandler(async (req, res) => {
     .status(400)
     .json(new ApiResponse(400, null, "Invalid role"));
 });
+
 
 export {
   studentDashboard,

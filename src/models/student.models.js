@@ -1,6 +1,4 @@
 import mongoose, { Schema } from "mongoose";
-import User from "./users.models.js";
-import Batch from "./batch.models.js";
 
 const studentSchema = new Schema({
   user_id: {
