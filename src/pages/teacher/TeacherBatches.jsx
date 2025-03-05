@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TeacherDashboardHeader from "./TeacherDashBoardHeader";
 
-function ViewBatches() {
+function TeacherBatches() {
   const [ownBatches, setOwnBatches] = useState([]);
   const [partOfBatch, setPartOfBatch] = useState([]);
   const [editableBatch, setEditableBatch] = useState(null);
@@ -506,4 +506,4 @@ function ViewBatches() {
   );
 }
 
-export default ViewBatches;
+export default TeacherBatches;

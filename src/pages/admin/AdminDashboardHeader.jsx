@@ -32,11 +32,10 @@ function StudentDashboardHeader() {
   }, []);
 
   const navLinks = [
-    { to: "/student/dashboard", icon: <FaTachometerAlt className="mr-2" />, text: "Dashboard" },
-    { to: "/student/tuitionrequest", icon: <FaChalkboardTeacher className="mr-2" />, text: "Post Request" },
-    { to: "/student/tutorsearch", icon: <FaSearch className="mr-2" />, text: "Find Tutor" },
-    { to: "/student/posts", icon: <FaBook className="mr-2" />, text: "Your Posts" },
-    { to: "/student/batches", icon: <FaUsers className="mr-2" />, text: "Your Batches" }
+    { to: "/admin/dashboard", icon: <FaTachometerAlt className="mr-2" />, text: "Dashboard" },
+    { to: "/admin/users", icon: <FaChalkboardTeacher className="mr-2" />, text: "Post Request" },
+    { to: "/admin/posts", icon: <FaBook className="mr-2" />, text: "Your Posts" },
+    { to: "/admin/batches", icon: <FaUsers className="mr-2" />, text: "Your Batches" }
   ];
 
   async function getNotificationCount() {

@@ -1,213 +1,161 @@
-import React, { useState } from "react";
-import { FaUserCircle, FaBell, FaSearch } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import AdminDashboardHeader from "./AdminDashboardHeader.jsx";
 import handleLogout from "../../utils/HandleLogout.jsx";
-import { Link, useNavigate } from "react-router-dom";
 
-export default function AdminDashboard() {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([
-    "A new user has registered.",
-    "A tuition post has been submitted for approval.",
-    "Platform Maintenance scheduled for 3:00 AM.",
-  ]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [users, setUsers] = useState([
-    { name: "John Doe", role: "student", email: "john@solvespace.com" },
-    { name: "Alice Smith", role: "teacher", email: "alice@solvespace.com" },
-  ]);
+function AdminDashboard() {
+  const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [tuitionPosts, setTuitionPosts] = useState([
-    { subject: "Math", postedBy: "John Doe", status: "pending" },
-    { subject: "Physics", postedBy: "Alice Smith", status: "approved" },
-  ]);
+  useEffect(() => {
+    const fetchRecommendedCourses = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchQuery);
-  };
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        };
 
-  const handleApprovePost = (index) => {
-    const updatedPosts = [...tuitionPosts];
-    updatedPosts[index].status = "approved";
-    setTuitionPosts(updatedPosts);
-    console.log("Tuition post approved:", updatedPosts[index]);
-  };
+        const response = await axios.get('/api/v1/student/dashboard', config);
+        
+        setRecommendedCourses(response.data.data);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching recommended courses:', err);
+        setError(err.message);
+        setIsLoading(false);
+        
+        if (err.response && err.response.status === 403) {
+          handleLogout();
+        }
+      }
+    };
 
-  const handleDeletePost = (index) => {
-    const updatedPosts = tuitionPosts.filter((_, i) => i !== index);
-    setTuitionPosts(updatedPosts);
-    console.log("Tuition post deleted:", index);
-  };
+    fetchRecommendedCourses();
+  }, []);
+
+  // Loading State
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AdminDashboardHeader/>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AdminDashboardHeader/>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-md p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Admin Dashboard</h1>
-        <div className="flex-grow mx-4 max-w-2xl relative">
-          <div className="flex items-center border rounded-md shadow-sm px-3 py-2 bg-gray-100">
-            <FaSearch className="text-gray-500 mr-2" />
-            <input
-              type="text"
-              placeholder="Search for users, posts, or tutors..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent outline-none"
-            />
-            <button
-              onClick={handleSearch}
-              className="ml-2 px-4 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
-            >
-              Search
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications((prev) => !prev)}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <FaBell className="text-2xl" />
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-md p-4 z-10">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                  Notifications
-                </h3>
-                <ul className="space-y-2">
-                  {notifications.map((note, index) => (
-                    <li
-                      key={index}
-                      className="p-2 bg-gray-50 rounded-md shadow-sm"
-                    >
-                      {note}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowAccountMenu((prev) => !prev)}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <FaUserCircle className="text-2xl" />
-            </button>
-            {showAccountMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md p-4 z-10">
-                <ul className="space-y-2">
-                  <li>
-                    <button
-                      onClick={() => console.log("Viewing Profile...")}
-                      className="w-full text-left hover:text-indigo-600"
-                    >
-                      View Profile
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => console.log("Editing Profile...")}
-                      className="w-full text-left hover:text-indigo-600"
-                    >
-                      Edit Profile
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="w-full text-left hover:text-indigo-600"
-                      onClick={() => handleLogout(navigate)}
-                    >
-                      Logout
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* User Management Section */}
-      <section className="max-w-6xl mx-auto py-6 space-y-6">
-        <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">User Management</h2>
-          <div className="space-y-4">
-            <h3 className="text-md font-semibold text-gray-700">Students & Teachers</h3>
-            <ul className="space-y-2">
-              {users.map((user, index) => (
-                <li
-                  key={index}
-                  className="p-4 bg-gray-50 rounded-md shadow-sm flex justify-between items-center"
-                >
-                  <span>{user.name}</span>
-                  <span className="text-gray-500">{user.email}</span>
-                  <span className="text-sm">{user.role}</span>
-                  <button
-                    onClick={() => console.log("Editing user...")}
-                    className="text-indigo-500 hover:text-indigo-600"
-                  >
-                    Edit
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <AdminDashboardHeader/>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Recommended Courses</h1>
         </div>
 
-        {/* Tuition Post Management Section */}
-        <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">Tuition Post Management</h2>
-          <div className="space-y-4">
-            <h3 className="text-md font-semibold text-gray-700">Pending Posts</h3>
-            <ul className="space-y-2">
-              {tuitionPosts
-                .filter((post) => post.status === "pending")
-                .map((post, index) => (
-                  <li
-                    key={index}
-                    className="p-4 bg-gray-50 rounded-md shadow-sm flex justify-between items-center"
-                  >
-                    <span>{post.subject}</span>
-                    <span>{post.postedBy}</span>
-                    <span className="text-sm">{post.status}</span>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleApprovePost(index)}
-                        className="text-green-500 hover:text-green-600"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleDeletePost(index)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        Delete
-                      </button>
+        {recommendedCourses.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-lg shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">No recommended courses</h3>
+            <p className="mt-1 text-sm text-gray-500">Check back later for personalized recommendations.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {recommendedCourses.map((course) => (
+              <div key={course._id} className="bg-white overflow-hidden shadow rounded-lg relative">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900 truncate">{course.title}</h2>
+                      <span className="text-sm text-gray-500 capitalize">
+                        {course.subject} • {course.class} Class
+                      </span>
                     </div>
-                  </li>
-                ))}
-            </ul>
+                    <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                      {course.is_batch ? 'Batch' : 'Individual'}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-500 line-clamp-3">{course.description}</p>
+                    
+                    <div className="flex items-center text-gray-600 mt-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">
+                        {course.owner_id.firstname} {course.owner_id.lastname}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm">
+                        {course.weekly_schedule.join(', ')} • {course.time}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">
+                        {course.max_size} Max Participants
+                      </span>
+                    </div>
+                    
+                    <button className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition duration-150 ease-in-out">
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Platform Statistics */}
-        <div className="bg-white shadow-md p-6 rounded-md">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">Platform Statistics</h2>
-          <div className="space-y-2">
-            <div>
-              <h3 className="text-md font-semibold text-gray-700">Active Users</h3>
-              <p>50 users are currently active on the platform.</p>
-            </div>
-            <div>
-              <h3 className="text-md font-semibold text-gray-700">Total Posts</h3>
-              <p>15 posts are available, with 5 pending approval.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+        )}
+      </div>
     </div>
   );
 }
+
+export default AdminDashboard;
