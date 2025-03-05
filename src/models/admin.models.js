@@ -27,7 +27,7 @@ const adminSchema = new Schema({
   total_batches: { 
     type: Number, 
     default: 0 
-  }
+  },
 }, { timestamps: true });
 
 const Admin = mongoose.model("Admin", adminSchema);
