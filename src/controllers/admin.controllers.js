@@ -2,14 +2,49 @@ import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import Batch from "../models/batch.models.js";
 import UserStats from "../models/userStats.models.js";
 import Admin from "../models/admin.models.js";
-
-import Batch from "../models/batch.models.js";
+import Post from "../models/post.models.js";
 
 
 const adminDashboard = asyncHandler(async (req, res) => {
-   
+  const adminStats = await Admin.findOne({})
+    .select("total_students total_teachers total_posts total_batches")
+    .lean();
+
+  if (!adminStats) {
+    return res.status(404).json(new ApiResponse(404, null, "Admin stats not found"));
+  }
+
+  const userGrowth = await UserStats.find({})
+    .select("month year new_students new_teachers -_id")
+    .sort({ year: -1, month: -1 })
+    .lean();
+
+  // Get recent activity (latest 5 posts and batches)
+  const recentPosts = await Post.find().sort({ createdAt: -1 }).limit(5).select("title createdAt").lean();
+  const recentBatches = await Batch.find().sort({ createdAt: -1 }).limit(5).select("subject createdAt").lean();
+
+  // Calculate growth rate (if last two months' data is available)
+  let growthRates = {};
+  if (userGrowth.length > 1) {
+    const [current, previous] = userGrowth;
+    growthRates = {
+      studentGrowth: ((current.new_students - previous.new_students) / (previous.new_students || 1)) * 100,
+      teacherGrowth: ((current.new_teachers - previous.new_teachers) / (previous.new_teachers || 1)) * 100,
+    };
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, { 
+      stats: adminStats, 
+      userGrowth, 
+      recentPosts, 
+      recentBatches, 
+      growthRates 
+    }, "Dashboard data fetched successfully")
+  );
 });
 
 const addUser = asyncHandler(async (req, res) => {
@@ -106,7 +141,7 @@ const viewAllTeacher = asyncHandler(async (req, res) => {
   }
 });
 
-const viewAllCourses = asyncHandler(async (req, res) => {
+const viewAllBatches = asyncHandler(async (req, res) => {
   const courses = await Batch.find().populate('teacher_id').populate('student_ids');
 
   if (courses.length > 0) {
@@ -120,7 +155,7 @@ const viewAllCourses = asyncHandler(async (req, res) => {
   }
 });
 
-const removeCourses = asyncHandler(async (req, res) => {
+const removeBatch = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const course = await Batch.findById(id);
@@ -137,7 +172,7 @@ const removeCourses = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Course removed successfully", "success"));
 });
 
-const addCourses = asyncHandler(async (req, res) => {
+const addBatch = asyncHandler(async (req, res) => {
   const { teacher_id, subject, class: className, schedule, time, student_ids } = req.body;
 
   const course = await Batch.create({
@@ -152,6 +187,61 @@ const addCourses = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(new ApiResponse(201, course, "Course added successfully"));
+});
+
+const viewAllPosts = asyncHandler(async (req, res) => {
+  const {role } = req.user;
+  if(role !== "admin"){
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Unauthorized access"));
+  }
+  const allPosts = await Post.find({});
+  const ownerIds = allPosts
+    .map(post => post.owner_id)
+    .populate("owner_id", "username")
+    .lean();
+  
+  return res
+    .status(200)
+    .json(new ApiResponse(200, allPosts, "successfully retrieved all the posts"));
+});
+
+const removePost = asyncHandler(async (req, res) => {
+  const {role } = req.user;
+  if(role !== "admin"){
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Unauthorized access"));
+  }
+  const { id:post_id } = req.params;
+  await Post.findOneAndDelete(post_id);
+  res
+    .status(200)
+    .json(new ApiResponse(200, null, `post[${post_id}] deleted successfully`));
+
+});
+const addPost = asyncHandler(async (req, res) => {
+  const { role } = req.user;
+  if(role !== "admin"){
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Unauthorized access"));
+  }
+  const { postInfo } = req.body;
+  const allowedInfo = ["owner_id", "owner", "subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
+
+  const sanitizedInfo = Object.keys(postInfo)
+    .filter(key => allowedInfo.includes(key))  // Fixed method to 'includes()'
+    .reduce((obj, key) => {
+      obj[key] = postInfo[key];
+      return obj;
+    }, {});
+
+  const post = await Post.create(sanitizedInfo);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, post, "Post has been created."));
 });
 
 async function updateAdminStats(post_count, batch_count){
@@ -172,8 +262,11 @@ export {
   removeUser,
   viewAllStudent,
   viewAllTeacher,
-  viewAllCourses,
-  removeCourses,
-  addCourses,
+  viewAllBatches,
+  removeBatch,
+  addBatch,
+  viewAllPosts,
+  removePost,
+  addPost,
   updateAdminStats
 };

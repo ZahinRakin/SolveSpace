@@ -5,7 +5,13 @@ import {
   addUser,
   removeUser,
   viewAllStudent,
-  viewAllTeacher
+  viewAllTeacher,
+  viewAllPosts,
+  removePost,
+  addPost,
+  viewAllBatches,
+  removeBatch,
+  addBatch
 } from "../controllers/admin.controllers.js";
 
 import { validateRegistration } from "../middlewares/validate.middlewares.js";
@@ -17,6 +23,14 @@ router.route("/add-user").post(verifyJWT, validateRegistration, addUser);
 router.route("/remove-user/:id").delete(verifyJWT, removeUser);
 router.route("/students").get(verifyJWT, viewAllStudent);
 router.route("/teachers").get(verifyJWT, viewAllTeacher);
+//posts
+router.route("/posts").get(verifyJWT, viewAllPosts);
+router.route("/remove-post/:post_id").delete(verifyJWT, removePost);
+router.route("/add-post").post(verifyJWT, addPost);
+//batches
+router.route("/batches").get(verifyJWT, viewAllBatches);
+router.route("/remove-post/:post_id").delete(verifyJWT, removeBatch);
+router.route("/add-post").post(verifyJWT, addBatch);
 
 
 export default router;
