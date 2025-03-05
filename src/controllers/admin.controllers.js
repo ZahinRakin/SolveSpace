@@ -2,10 +2,13 @@ import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { clearUserData } from "../utils/removeUser.js";
+
 import Batch from "../models/batch.models.js";
 import UserStats from "../models/userStats.models.js";
 import Admin from "../models/admin.models.js";
 import Post from "../models/post.models.js";
+import Report from "../models/Report.models.js";
 
 
 const adminDashboard = asyncHandler(async (req, res) => {
@@ -98,19 +101,15 @@ const addUser = asyncHandler(async (req, res) => {
 
 const removeUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const { role } = req.user;
 
-  const user = await User.findById(id);
-
-  if (!user) {
-    res
-      .status(404)
-      .json(new ApiError(404, "User not found."));
+  if (role !== "admin") {
+    return res
+      .status(403)
+      .json(new ApiResponse(403, null, "Unauthorized to remove users."));
   }
 
-  await user.deleteOne();
-  res
-    .status(200)
-    .json(new ApiResponse(200, "user removed", "success"));
+  clearUserData(id, res);
 });
 
 const viewAllStudent = asyncHandler(async (req, res) => {
@@ -196,9 +195,8 @@ const viewAllPosts = asyncHandler(async (req, res) => {
       .status(400)
       .json(new ApiResponse(400, null, "Unauthorized access"));
   }
-  const allPosts = await Post.find({});
-  const ownerIds = allPosts
-    .map(post => post.owner_id)
+  const allPosts = await Post
+    .find({})
     .populate("owner_id", "username")
     .lean();
   
@@ -244,6 +242,29 @@ const addPost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, post, "Post has been created."));
 });
 
+const getAllReports = asyncHandler(async (req, res) => {
+  try {
+    console.log("inside getAllReports: Checking role");
+    if (req.user.role !== "admin") {
+      return res.status(403).json(new ApiResponse(403, null, "Only admin can do this"));
+    }
+
+    const reports = await Report.find({})
+      .populate("reporter_id", "username")
+      .populate("reportee_id", "username")
+      .lean();
+
+    if (!reports || reports.length === 0) {
+      return res.status(404).json(new ApiResponse(404, null, "No reports found!"));
+    }
+
+    res.status(200).json(new ApiResponse(200, reports, "Successfully retrieved all reports"));
+  } catch (error) {
+    console.error("Error fetching reports:", error);
+    res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
+  }
+});
+
 async function updateAdminStats(post_count, batch_count){
   const admin = await Admin.findOne({}).select("total_posts total_batches");
 
@@ -268,5 +289,6 @@ export {
   viewAllPosts,
   removePost,
   addPost,
-  updateAdminStats
+  updateAdminStats,
+  getAllReports
 };

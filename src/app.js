@@ -60,7 +60,7 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/post", postRouter);
 app.use("/api/v1/batch", batchRouter);
 app.use("/api/v1/zoom", zoomRouter); //zoom is a conferencing api.
-app.use("/api/v1/report", reportRouter); //zoom is a conferencing api.
+app.use("/api/v1/report", reportRouter);
 
 app.use(errorHandler);
 export { app };

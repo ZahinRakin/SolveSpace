@@ -58,17 +58,18 @@ const registerUser = asyncHandler(async (req, res) => {
 
   refreshToken = await newUser.generateRefreshToken();
   newUser.refreshToken = refreshToken;
-  await newUser.save();
   
-  await updateUserStats(newUser.role);
-  await updateAdminStats(newUser.role);
+  await updateUserStats(newUser.role, res);
+  await updateAdminStats(newUser.role, res);
+
+  await newUser.save();
 
   res.status(201).json(new ApiResponse(201, newUser.username, "Registration successful."));
 });
 
-async function updateUserStats(role) {
+async function updateUserStats(role, res) {
   const month = new Date().toLocaleString('default', { month: 'long' });
-  const year = new Date().getFullYear();
+  const year = new Date().getFullYear().toString();
   let userStats = await UserStats.findOne({ 
     month, 
     year 
@@ -94,9 +95,13 @@ async function updateUserStats(role) {
   await userStats.save();
 }
 
-async function updateAdminStats(role) {
+async function updateAdminStats(role, res) {
   const admin = await Admin.findOne({}).select("total_students total_teachers");
-  if (!admin) return;
+  if (!admin) {
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Internal server error"));
+  };
 
   if (role === "student") {
     admin.total_students += 1;

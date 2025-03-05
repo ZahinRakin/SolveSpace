@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import { clearUserData } from "../utils/removeUser.js";
 
 
 const viewProfile = asyncHandler(async (req, res) => {
@@ -69,16 +70,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 
 const deleteAccount = asyncHandler(async (req, res) => {
   const userId = req.user._id; 
-  const user = await User.findByIdAndDelete(userId);
-  if (!user) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "user not found"));
-  }
-  
-  res
-    .status(200)
-    .json(new ApiResponse(200, "account deleted", "success"));
+  clearUserData(userId, res);
 });
 
 const getUser = asyncHandler(async (req, res) => {

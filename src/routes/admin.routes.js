@@ -11,7 +11,8 @@ import {
   addPost,
   viewAllBatches,
   removeBatch,
-  addBatch
+  addBatch,
+  getAllReports
 } from "../controllers/admin.controllers.js";
 
 import { validateRegistration } from "../middlewares/validate.middlewares.js";
@@ -31,6 +32,7 @@ router.route("/add-post").post(verifyJWT, addPost);
 router.route("/batches").get(verifyJWT, viewAllBatches);
 router.route("/remove-post/:post_id").delete(verifyJWT, removeBatch);
 router.route("/add-post").post(verifyJWT, addBatch);
+router.route("/get-all-reports").get(verifyJWT, getAllReports);
 
 
 export default router;

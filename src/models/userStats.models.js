@@ -13,8 +13,14 @@ const UserStatsSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  new_students: Number,
-  new_teachers: Number,
+  new_students: {
+    type: Number,
+    default: 0
+  },
+  new_teachers: {
+    type: Number,
+    default: 0
+  },
 });
 
 const UserStats = mongoose.model("UserStats", UserStatsSchema);
