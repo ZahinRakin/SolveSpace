@@ -2,13 +2,14 @@ import User from "../models/users.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import UserStats from "../models/userStats.models.js";
+import Admin from "../models/admin.models.js";
 
 import Batch from "../models/batch.models.js";
 
 
 const adminDashboard = asyncHandler(async (req, res) => {
-  //here i can show the app performance. number of teachers and number of students
-  //increment from the previous month. 
+   
 });
 
 const addUser = asyncHandler(async (req, res) => {
@@ -153,6 +154,17 @@ const addCourses = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, course, "Course added successfully"));
 });
 
+async function updateAdminStats(post_count, batch_count){
+  const admin = await Admin.findOne({}).select("total_posts total_batches");
+
+  if (!admin) {
+    return res.status(404).json(new ApiResponse(404, null, "Admin not found"));
+  }
+  admin.total_posts += post_count;
+  admin.total_batches += batch_count;
+  await admin.save();
+}
+
 
 export {
   adminDashboard,
@@ -162,5 +174,6 @@ export {
   viewAllTeacher,
   viewAllCourses,
   removeCourses,
-  addCourses
+  addCourses,
+  updateAdminStats
 };

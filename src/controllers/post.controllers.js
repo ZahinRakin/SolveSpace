@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { systemNotification } from "./notification.controllers.js";
+import { updateAdminStats } from "./admin.controllers.js"; //post_count, batch_count
 
 import Post from "../models/post.models.js";
 import Batch from "../models/batch.models.js";
@@ -31,7 +32,7 @@ const createPost = asyncHandler(async (req, res) => {
     if(post.owner === "teacher"){
       const intervalID = setInterval(() => monitorBatchSize(post._id, intervalID), 300000);
     }
-
+    await updateAdminStats(1, 0); //under construction.
     res
       .status(201)
       .json(new ApiResponse(201, post, "Post created successfully"));
@@ -69,7 +70,7 @@ const updatePost = asyncHandler(async (req, res) => {
     .reduce((obj, key) => {
       obj[key] = updates[key];
       return obj;
-    }, {}); //this needs to studied more.
+    }, {});
 
   if (Object.keys(filteredUpdates).length === 0) {
     return res
@@ -78,6 +79,8 @@ const updatePost = asyncHandler(async (req, res) => {
   }
 
   const updatedPost = await Post.findByIdAndUpdate(post_id, filteredUpdates, { new: true, runValidators: true });
+
+  await updateAdminStats(1, 0); //under construction
 
   res
     .status(200)
@@ -101,6 +104,8 @@ const deletePost = asyncHandler(async (req, res) => {
   }
 
   await post.deleteOne();
+
+  await updateAdminStats(-1, 0); //under construction
 
   res
     .status(200)
@@ -142,6 +147,7 @@ async function postToBatch(post, teacher_id) {
   }));
 
   await post.deleteOne();
+  await updateAdminStats(-1, 1); //under construction
 
   return batch;
 }
@@ -165,6 +171,9 @@ async function monitorBatchSize(post_id, intervalID) {
     }
   }
 }
+
+
+
 
 export {
   createPost,

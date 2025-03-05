@@ -44,6 +44,10 @@ const batchSchema = new Schema({
     type: Number,
     defualt: 0,
   },
+  time_to_pay: {
+    type: Boolean,
+    default: false
+  },
 
 
   is_continuous: {

@@ -2,12 +2,46 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Batch from "../models/batch.models.js";
 import User from "../models/users.models.js";
+import { updateAdminStats } from "./admin.controllers.js";
 
-import { systemNotification } from "./notification.controllers.js";
+import { systemNotification, sendNotification } from "./notification.controllers.js";
+import { sendEmail } from "./emailService.controllers.js";
+
+const createBatch = asyncHandler(async (req, res) => {
+  const {
+    user: { _id: owner_id, role: owner },
+    body: batchInfo
+  } = req;
+
+  batchInfo.owner_id = owner_id;
+  batchInfo.owner = owner;
+
+  const batchFilter = [
+    "owner_id", "owner", "teacher_id", "subject", "class", 
+    "weekly_schedule", "time", "salary", "is_continuous", 
+    "is_batch", "student_ids"
+  ];
+
+  const sanitizedBatchInfo = Object.keys(batchInfo)
+    .filter(key => batchFilter.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = batchInfo[key];
+      return obj;
+    }, {});
+
+  try {
+    const batch = await Batch.create(sanitizedBatchInfo);
+
+    await updateAdminStats(0, 1);
+
+    res.status(201).json(new ApiResponse(201, batch, "Batch created successfully"));
+  } catch (error) {
+    res.status(400).json(new ApiResponse(400, null, error.message || "Failed to create batch"));
+  }
+});
 
 
-
-const addUserToBatch = asyncHandler(async (req, res) => { // I have to consider the batch_size factor. if possible. not that important. I think.
+const addUserToBatch = asyncHandler(async (req, res) => {
   const {
     params: { batch_id, user_id },
     user: { _id: owner_id }
@@ -91,6 +125,8 @@ const destroyBatch = asyncHandler(async (req, res) => {
 
   await Batch.findByIdAndDelete(batch_id);
 
+  await updateAdminStats(0, -1); //under construction
+
   res.status(200).json(new ApiResponse(200, null, "Batch successfully deleted"));
 });
 
@@ -156,14 +192,44 @@ const getYourBatches = asyncHandler(async (req, res) => {
   }
 });
 
-const paymentSystem = asyncHandler(async(req, res) => {
-  //have to do something is order to do the payment thing.
+const askForPayment = asyncHandler(async (req, res) => {
+  const { _id: teacher_id } = req.body;
+  const { id: batch_id } = req.params;
+
+  const batch = await Batch.findById(batch_id);
+  if (!batch) {
+    return res.status(404).json(new ApiResponse(404, null, "Batch not found"));
+  }
+
+  const student_ids = batch.student_ids;
+
+  const students = await User.find({ _id: { $in: student_ids } });
+
+  if (!students.length) {
+    return res.status(404).json(new ApiResponse(404, null, "No students found in this batch"));
+  }
+
+  const updatePromises = students.map(async (student) => {
+    student.time_to_pay = true;
+    await student.save();
+
+    sendNotification(student._id, teacher_id, `Teacher is asking for payment from batch[${batch_id}].`);
+    sendEmail(student.email, "Payment notice", `Teacher is asking for payment from batch[${batch_id}].`);
+  });
+
+  // Execute all updates in parallel
+  await Promise.all(updatePromises);
+
+  res.status(200).json(new ApiResponse(200, batch, "Successfully asked for payment."));
 });
+
 
 export {
   addUserToBatch,
   removeUserFromBatch,
   destroyBatch,
   updateBatch,
-  getYourBatches
+  getYourBatches,
+  createBatch,
+  askForPayment
 }

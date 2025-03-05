@@ -6,12 +6,16 @@ import {
 } from "../utils/validateUserData.js";
 
 function validateRegistration (req, res, next) {  
+  if (req.body.role === "student") {
+    delete req.body.sslczStoreId;
+    delete req.body.sslczStorePassword;
+  }
   const { errors, sanitizedData } = validateRegistrationData(req.body);
   
   if (errors) {
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message: `${errors.firstname || errors.lastname || errors.username || errors.email || errors.password || errors.role || errors.sslczStoreId || errors.sslczStorePassword}`,
       errors
     });
   }

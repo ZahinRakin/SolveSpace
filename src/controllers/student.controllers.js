@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import Post from "../models/post.models.js";
 import Batch from "../models/batch.models.js";
 import Student from "../models/student.models.js";
+import Rating from "../models/rating.models.js";
 
 import { postToBatch } from "./post.controllers.js";
 import { systemNotification } from "./notification.controllers.js";

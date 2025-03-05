@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import User from "../models/users.models.js";
 import Teacher from "../models/teacher.models.js";
 import Student from "../models/student.models.js";
+import UserStats from "../models/userStats.models.js";
+import Admin from "../models/admin.models.js";
 
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -57,9 +59,53 @@ const registerUser = asyncHandler(async (req, res) => {
   refreshToken = await newUser.generateRefreshToken();
   newUser.refreshToken = refreshToken;
   await newUser.save();
+  
+  await updateUserStats(newUser.role);
+  await updateAdminStats(newUser.role);
 
   res.status(201).json(new ApiResponse(201, newUser.username, "Registration successful."));
 });
+
+async function updateUserStats(role) {
+  const month = new Date().toLocaleString('default', { month: 'long' });
+  const year = new Date().getFullYear();
+  let userStats = await UserStats.findOne({ 
+    month, 
+    year 
+  });
+
+  if (!userStats) {
+    try {
+      userStats = await UserStats.create({
+        month,
+        year
+      });
+    } catch (error) {
+      return res.status(error.statusCode).json(new ApiResponse(error.statusCode, null, error.message));
+    }
+  }
+
+  if (role === "student") {
+    userStats.new_students += 1;
+  } else if (role === "teacher") {
+    userStats.new_teachers += 1;
+  }
+
+  await userStats.save();
+}
+
+async function updateAdminStats(role) {
+  const admin = await Admin.findOne({}).select("total_students total_teachers");
+  if (!admin) return;
+
+  if (role === "student") {
+    admin.total_students += 1;
+  } else if (role === "teacher") {
+    admin.total_teachers += 1;
+  }
+
+  await admin.save();
+}
 
 const loginUser = asyncHandler(async (req, res) => {
   const { username, password, rememberMe } = req.sanitizedData;
