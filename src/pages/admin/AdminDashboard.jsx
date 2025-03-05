@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import AdminDashboardHeader from "./AdminDashboardHeader.jsx";
-import handleLogout from "../../utils/HandleLogout.jsx";
 import { 
-  Users, 
-  UserCheck, 
-  FileText, 
-  BookOpen, 
-  TrendingUp, 
-  AlertCircle,
-  Loader,
-  Clock
+  Users, UserCheck, FileText, BookOpen, 
 } from "lucide-react";
+import handleLogout from "../../utils/HandleLogout.jsx";
+import AdminDashboardHeader from "./AdminDashboardHeader.jsx";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
+import StatCard from "../../component/cards/StatCard.jsx";
+import GrowthCard from "../../component/cards/GrowthCard.jsx";
+import ActivityCard from "../../component/cards/ActivityCard.jsx";
+import ErrorState from "../../component/states/ErrorState.jsx";
 
 function AdminDashboard() {
   const [dashboardInfo, setDashboardInfo] = useState(null);
@@ -19,198 +17,106 @@ function AdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchAdminDashboardInfo();
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) throw new Error('No authentication token found');
+        
+        const response = await axios.get('/api/v1/admin/dashboard', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        setDashboardInfo(response.data.data);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err.message);
+        if (err.response?.status === 403) handleLogout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
 
-  async function fetchAdminDashboardInfo() {
-    try {
-      const token = localStorage.getItem('accessToken');
-
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      };
-
-      const response = await axios.get('/api/v1/admin/dashboard', config);
-
-      setDashboardInfo(response.data.data);
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError(err.message);
-      setIsLoading(false);
-
-      if (err.response && err.response.status === 403) {
-        handleLogout();
-      }
-    }
-  }
-
-  // Loading State
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <AdminDashboardHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-center items-center h-64">
-            <Loader className="animate-spin h-12 w-12 text-indigo-500" />
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Error State
   if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <AdminDashboardHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <AlertCircle className="h-5 w-5 text-red-400" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <AdminDashboardHeader />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Total Stats */}
-          <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
-            <div className="flex items-center">
-              <div className="bg-indigo-100 p-3 rounded-full">
-                <Users className="h-6 w-6 text-indigo-600" />
-              </div>
-              <h3 className="text-xl font-semibold ml-3">Total Stats</h3>
-            </div>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center">
-                <Users className="h-4 w-4 text-gray-500 mr-2" />
-                <p><strong>Total Students:</strong> {dashboardInfo.stats.total_students}</p>
-              </div>
-              <div className="flex items-center">
-                <UserCheck className="h-4 w-4 text-gray-500 mr-2" />
-                <p><strong>Total Teachers:</strong> {dashboardInfo.stats.total_teachers}</p>
-              </div>
-              <div className="flex items-center">
-                <FileText className="h-4 w-4 text-gray-500 mr-2" />
-                <p><strong>Total Posts:</strong> {dashboardInfo.stats.total_posts}</p>
-              </div>
-              <div className="flex items-center">
-                <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
-                <p><strong>Total Batches:</strong> {dashboardInfo.stats.total_batches}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Growth Rates */}
-          <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
-            <div className="flex items-center">
-              <div className="bg-green-100 p-3 rounded-full">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold ml-3">Growth Rates</h3>
-            </div>
-            {dashboardInfo.growthRates ? (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 text-gray-500 mr-2" />
-                  <p>
-                    <strong>Student Growth:</strong> 
-                    <span className={dashboardInfo.growthRates.studentGrowth > 0 ? 'text-green-500' : 'text-red-500'}>
-                      {dashboardInfo.growthRates.studentGrowth !== undefined
-                        ? ' ' + dashboardInfo.growthRates.studentGrowth.toFixed(2) + '%'
-                        : ' No data'}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex items-center">
-                  <UserCheck className="h-4 w-4 text-gray-500 mr-2" />
-                  <p>
-                    <strong>Teacher Growth:</strong> 
-                    <span className={dashboardInfo.growthRates.teacherGrowth > 0 ? 'text-green-500' : 'text-red-500'}>
-                      {dashboardInfo.growthRates.teacherGrowth !== undefined
-                        ? ' ' + dashboardInfo.growthRates.teacherGrowth.toFixed(2) + '%'
-                        : ' No data'}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-4 text-gray-500">No growth data available</p>
-            )}
-          </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard Overview</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard 
+            icon={<Users />} 
+            title="Students" 
+            value={dashboardInfo.stats.total_students} 
+            bgColor="bg-blue-500" 
+          />
+          <StatCard 
+            icon={<UserCheck />} 
+            title="Teachers" 
+            value={dashboardInfo.stats.total_teachers} 
+            bgColor="bg-purple-500" 
+          />
+          <StatCard 
+            icon={<FileText />} 
+            title="Total Posts" 
+            value={dashboardInfo.stats.total_posts} 
+            bgColor="bg-green-500" 
+          />
+          <StatCard 
+            icon={<BookOpen />} 
+            title="Total Batches" 
+            value={dashboardInfo.stats.total_batches} 
+            bgColor="bg-amber-500" 
+          />
         </div>
 
-        {/* Recent Activity */}
-        <div className="mt-8">
-          <div className="flex items-center mb-4">
-            <Clock className="h-6 w-6 text-gray-700 mr-2" />
-            <h3 className="text-2xl font-semibold">Recent Activity</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8 mt-4">
-            {/* Recent Posts */}
-            <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
-              <div className="flex items-center">
-                <div className="bg-blue-100 p-2 rounded-full">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                </div>
-                <h4 className="text-xl font-semibold ml-3">Recent Posts</h4>
-              </div>
-              <ul className="mt-4 divide-y divide-gray-100">
-                {dashboardInfo.recentPosts.map((post, index) => (
-                  <li key={index} className="py-3">
-                    <p className="text-gray-700 font-medium">{post.title}</p>
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Recent Batches */}
-            <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
-              <div className="flex items-center">
-                <div className="bg-purple-100 p-2 rounded-full">
-                  <BookOpen className="h-5 w-5 text-purple-600" />
-                </div>
-                <h4 className="text-xl font-semibold ml-3">Recent Batches</h4>
-              </div>
-              <ul className="mt-4 divide-y divide-gray-100">
-                {dashboardInfo.recentBatches.map((batch, index) => (
-                  <li key={index} className="py-3">
-                    <p className="text-gray-700 font-medium">{batch.subject}</p>
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {new Date(batch.createdAt).toLocaleDateString()}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <GrowthCard data={dashboardInfo.growthRates} />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <ActivityCard 
+              title="Recent Posts" 
+              icon={<FileText />} 
+              items={dashboardInfo.recentPosts} 
+              color="blue" 
+              dateField="createdAt" 
+              titleField="title" 
+            />
+            <ActivityCard 
+              title="Recent Batches" 
+              icon={<BookOpen />} 
+              items={dashboardInfo.recentBatches} 
+              color="amber"
+              dateField="createdAt" 
+              titleField="subject" 
+            />
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
+
+// Reusable components
+
+
+
+
+
+
+
+
+
+
 
 export default AdminDashboard;
