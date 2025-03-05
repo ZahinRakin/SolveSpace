@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TeacherDashboardHeader from "./teacher/TeacherDashboardHeader";
+import TeacherDashboardHeader from "./TeacherDashBoardHeader";
 
 function ViewBatches() {
   const [ownBatches, setOwnBatches] = useState([]);
@@ -179,8 +179,7 @@ function ViewBatches() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TeacherDashboardHeader />
-      
+      <TeacherDashboardHeader/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Your Batches</h1>

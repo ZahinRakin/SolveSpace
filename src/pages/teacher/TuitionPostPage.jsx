@@ -66,7 +66,7 @@ function TuitionPostPage() {
       
       // Navigate after notification
       setTimeout(() => {
-        navigate("/teacher/dashboard");
+        navigate("/user/posts");
       }, 3500);
       
     } catch (error) {

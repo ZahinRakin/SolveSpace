@@ -18,8 +18,8 @@ import TuitionRequestPage from "./pages/student/TuitionRequestPage";
 import TutorSearchPage from "./pages/student/TutorSearchPage";
 import ViewProfilePage from "./pages/ViewProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
-import ViewPosts from "./pages/ViewPosts";
-import ViewBatches from "./pages/ViewBatches";
+import ViewPosts from "./pages/teacher/ViewPosts";
+import ViewBatches from "./pages/teacher/ViewBatches";
 
 const router = createBrowserRouter([
   {
@@ -50,10 +50,16 @@ const router = createBrowserRouter([
     path: "/teacher/dashboard",
     element: <TeacherDashboard/>
   },{
-    path: "/user/posts",
+    path: "/teacher/posts/", //is this alright
     element: <ViewPosts/>
   },{
-    path: "/user/batches",
+    path: "/teacher/batches/", //is this alright
+    element: <ViewBatches/>
+  },{
+    path: "/student/posts/", //is this alright
+    element: <ViewPosts/>
+  },{
+    path: "/student/batches/", //is this alright
     element: <ViewBatches/>
   },{
     path: "/admin/dashboard",

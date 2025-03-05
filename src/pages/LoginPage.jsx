@@ -30,6 +30,8 @@ function LoginPage() {
         admin: "/admin/dashboard",
       };
 
+      console.log(dashboardRoutes[role]); //test ofc
+
       navigate(dashboardRoutes[role] || "/");
     } catch (error) {
       setErrorMessage("Invalid username or password. Please try again.");
