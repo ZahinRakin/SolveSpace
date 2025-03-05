@@ -11,8 +11,5 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App/>
-    {/* <StudentDashboard/> */}
-    {/* <TeacherDashboard/> */}
-    {/* <AdminDashboard/> */}
   </StrictMode>,
 )

@@ -9,7 +9,7 @@ import {
   FaUsers, 
   FaClock 
 } from "react-icons/fa";
-import StudentDashboardHeader from "./StudentDashboardHeader";
+import AdminDashboardHeader from "./AdminDashboardHeader";
 
 function TuitionRequestPage() {
   const navigate = useNavigate();
@@ -126,7 +126,7 @@ function TuitionRequestPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <StudentDashboardHeader />
+      <AdminDashboardHeader />
       
       {/* Notification */}
       <div id="notification" className="fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out translate-y-[-100px]"></div>

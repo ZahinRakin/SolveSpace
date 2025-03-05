@@ -2,53 +2,63 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AdminDashboardHeader from "./AdminDashboardHeader.jsx";
 import handleLogout from "../../utils/HandleLogout.jsx";
+import { 
+  Users, 
+  UserCheck, 
+  FileText, 
+  BookOpen, 
+  TrendingUp, 
+  AlertCircle,
+  Loader,
+  Clock
+} from "lucide-react";
 
 function AdminDashboard() {
-  const [recommendedCourses, setRecommendedCourses] = useState([]);
+  const [dashboardInfo, setDashboardInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchRecommendedCourses = async () => {
-      try {
-        const token = localStorage.getItem('accessToken');
-        
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const config = {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        };
-
-        const response = await axios.get('/api/v1/student/dashboard', config);
-        
-        setRecommendedCourses(response.data.data);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching recommended courses:', err);
-        setError(err.message);
-        setIsLoading(false);
-        
-        if (err.response && err.response.status === 403) {
-          handleLogout();
-        }
-      }
-    };
-
-    fetchRecommendedCourses();
+    fetchAdminDashboardInfo();
   }, []);
+
+  async function fetchAdminDashboardInfo() {
+    try {
+      const token = localStorage.getItem('accessToken');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      const response = await axios.get('/api/v1/admin/dashboard', config);
+
+      setDashboardInfo(response.data.data);
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.message);
+      setIsLoading(false);
+
+      if (err.response && err.response.status === 403) {
+        handleLogout();
+      }
+    }
+  }
 
   // Loading State
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <AdminDashboardHeader/>
+        <AdminDashboardHeader />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            <Loader className="animate-spin h-12 w-12 text-indigo-500" />
           </div>
         </div>
       </div>
@@ -59,14 +69,12 @@ function AdminDashboard() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <AdminDashboardHeader/>
+        <AdminDashboardHeader />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
+                <AlertCircle className="h-5 w-5 text-red-400" />
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
@@ -80,79 +88,126 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminDashboardHeader/>
+      <AdminDashboardHeader />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Recommended Courses</h1>
-        </div>
-
-        {recommendedCourses.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-lg shadow">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No recommended courses</h3>
-            <p className="mt-1 text-sm text-gray-500">Check back later for personalized recommendations.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Total Stats */}
+          <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
+            <div className="flex items-center">
+              <div className="bg-indigo-100 p-3 rounded-full">
+                <Users className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-semibold ml-3">Total Stats</h3>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center">
+                <Users className="h-4 w-4 text-gray-500 mr-2" />
+                <p><strong>Total Students:</strong> {dashboardInfo.stats.total_students}</p>
+              </div>
+              <div className="flex items-center">
+                <UserCheck className="h-4 w-4 text-gray-500 mr-2" />
+                <p><strong>Total Teachers:</strong> {dashboardInfo.stats.total_teachers}</p>
+              </div>
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 text-gray-500 mr-2" />
+                <p><strong>Total Posts:</strong> {dashboardInfo.stats.total_posts}</p>
+              </div>
+              <div className="flex items-center">
+                <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
+                <p><strong>Total Batches:</strong> {dashboardInfo.stats.total_batches}</p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {recommendedCourses.map((course) => (
-              <div key={course._id} className="bg-white overflow-hidden shadow rounded-lg relative">
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900 truncate">{course.title}</h2>
-                      <span className="text-sm text-gray-500 capitalize">
-                        {course.subject} • {course.class} Class
-                      </span>
-                    </div>
-                    <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                      {course.is_batch ? 'Batch' : 'Individual'}
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm text-gray-500 line-clamp-3">{course.description}</p>
-                    
-                    <div className="flex items-center text-gray-600 mt-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-gray-700">
-                        {course.owner_id.firstname} {course.owner_id.lastname}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm">
-                        {course.weekly_schedule.join(', ')} • {course.time}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex justify-between items-center">
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-gray-700">
-                        {course.max_size} Max Participants
-                      </span>
-                    </div>
-                    
-                    <button className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo active:bg-indigo-700 transition duration-150 ease-in-out">
-                      View Details
-                    </button>
-                  </div>
+
+          {/* Growth Rates */}
+          <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
+            <div className="flex items-center">
+              <div className="bg-green-100 p-3 rounded-full">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold ml-3">Growth Rates</h3>
+            </div>
+            {dashboardInfo.growthRates ? (
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 text-gray-500 mr-2" />
+                  <p>
+                    <strong>Student Growth:</strong> 
+                    <span className={dashboardInfo.growthRates.studentGrowth > 0 ? 'text-green-500' : 'text-red-500'}>
+                      {dashboardInfo.growthRates.studentGrowth !== undefined
+                        ? ' ' + dashboardInfo.growthRates.studentGrowth.toFixed(2) + '%'
+                        : ' No data'}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center">
+                  <UserCheck className="h-4 w-4 text-gray-500 mr-2" />
+                  <p>
+                    <strong>Teacher Growth:</strong> 
+                    <span className={dashboardInfo.growthRates.teacherGrowth > 0 ? 'text-green-500' : 'text-red-500'}>
+                      {dashboardInfo.growthRates.teacherGrowth !== undefined
+                        ? ' ' + dashboardInfo.growthRates.teacherGrowth.toFixed(2) + '%'
+                        : ' No data'}
+                    </span>
+                  </p>
                 </div>
               </div>
-            ))}
+            ) : (
+              <p className="mt-4 text-gray-500">No growth data available</p>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="mt-8">
+          <div className="flex items-center mb-4">
+            <Clock className="h-6 w-6 text-gray-700 mr-2" />
+            <h3 className="text-2xl font-semibold">Recent Activity</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8 mt-4">
+            {/* Recent Posts */}
+            <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-2 rounded-full">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <h4 className="text-xl font-semibold ml-3">Recent Posts</h4>
+              </div>
+              <ul className="mt-4 divide-y divide-gray-100">
+                {dashboardInfo.recentPosts.map((post, index) => (
+                  <li key={index} className="py-3">
+                    <p className="text-gray-700 font-medium">{post.title}</p>
+                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Recent Batches */}
+            <div className="bg-white shadow-md rounded-lg p-6 transition-all hover:shadow-lg">
+              <div className="flex items-center">
+                <div className="bg-purple-100 p-2 rounded-full">
+                  <BookOpen className="h-5 w-5 text-purple-600" />
+                </div>
+                <h4 className="text-xl font-semibold ml-3">Recent Batches</h4>
+              </div>
+              <ul className="mt-4 divide-y divide-gray-100">
+                {dashboardInfo.recentBatches.map((batch, index) => (
+                  <li key={index} className="py-3">
+                    <p className="text-gray-700 font-medium">{batch.subject}</p>
+                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {new Date(batch.createdAt).toLocaleDateString()}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

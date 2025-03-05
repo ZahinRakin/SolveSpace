@@ -24,6 +24,11 @@ import StudentBatches from "./pages/student/StudentBatches";
 import TeacherPosts from "./pages/teacher/TeacherPosts";
 import TeacherBatches from "./pages/teacher/TeacherBatches";
 
+import ReportManagement from "./pages/admin/ReportManagement";
+import UserManagement from "./pages/admin/UserManagement";
+import PostManagement from "./pages/admin/PostManagement";
+import BatchManagement from "./pages/admin/BatchManagement";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -53,20 +58,32 @@ const router = createBrowserRouter([
     path: "/teacher/dashboard",
     element: <TeacherDashboard/>
   },{
-    path: "/teacher/posts/", //is this alright
+    path: "/teacher/posts/", 
     element: <TeacherPosts/>
   },{
-    path: "/teacher/batches/", //is this alright
+    path: "/teacher/batches/", 
     element: <TeacherBatches/>
   },{
-    path: "/student/posts/", //is this alright
+    path: "/student/posts/", 
     element: <StudentPosts/>
   },{
-    path: "/student/batches/", //is this alright
+    path: "/student/batches/", 
     element: <StudentBatches/>
   },{
-    path: "/admin/dashboard",
+    path: "/admin/dashboard", //admin start
     element: <AdminDashboard/>
+  },{
+    path: "/admin/users",
+    element: <UserManagement/>
+  },{
+    path: "/admin/posts",
+    element: <PostManagement/>
+  },{
+    path: "/admin/batches",
+    element: <BatchManagement/>
+  },{
+    path: "/admin/reports",
+    element: <ReportManagement/> //admin ends
   },{
     path: "/reset-password",
     element: <ResetPasswordPage/>

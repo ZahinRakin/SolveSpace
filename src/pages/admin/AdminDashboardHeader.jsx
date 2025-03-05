@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaUserCircle, FaBell, FaSearch, FaChalkboardTeacher, FaBook, FaUsers, FaTachometerAlt } from "react-icons/fa";
+import { FaUserCircle, FaBell, FaFileAlt, FaChalkboardTeacher, FaBook, FaUsers, FaTachometerAlt } from "react-icons/fa";
 import { useState, useRef, useEffect } from "react";
+import axios from "axios"; // Added missing axios import
 import handleLogout from "../../utils/HandleLogout.jsx";
 import logo from "/just-logo.png";
 
-function StudentDashboardHeader() {
+function AdminDashboardHeader() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const menuRef = useRef(null);
@@ -32,25 +33,23 @@ function StudentDashboardHeader() {
   }, []);
 
   const navLinks = [
-    { to: "/admin/dashboard", icon: <FaTachometerAlt className="mr-2" />, text: "Dashboard" },
-    { to: "/admin/users", icon: <FaChalkboardTeacher className="mr-2" />, text: "Post Request" },
-    { to: "/admin/posts", icon: <FaBook className="mr-2" />, text: "Your Posts" },
-    { to: "/admin/batches", icon: <FaUsers className="mr-2" />, text: "Your Batches" }
+    { to: "/admin/dashboard", icon: <FaTachometerAlt className="mr-2"/>, text: "Dashboard" },
+    { to: "/admin/users", icon: <FaUsers className="mr-2"/>, text: "Users" },
+    { to: "/admin/posts", icon: <FaBook className="mr-2"/>, text: "Posts" },
+    { to: "/admin/batches", icon: <FaChalkboardTeacher className="mr-2"/>, text: "Batches" },
+    { to: "/admin/reports", icon: <FaFileAlt className="mr-2" />, text: "Reports" }
   ];
 
   async function getNotificationCount() {
     try {
       const response = await axios.get("/api/v1/notifications/getnotifications", {
-        headers: {
-          withCredentials: true,
-        }
+        withCredentials: true
       });
-      setNotificationCount(response.data.data.length);//debug later. not imp
+      setNotificationCount(response.data.data.length);
     } catch (error) {
       console.error("Error fetching notification count", error);
     }
   }
-
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-10">
@@ -139,4 +138,4 @@ function StudentDashboardHeader() {
   );
 }
 
-export default StudentDashboardHeader;
+export default AdminDashboardHeader;
