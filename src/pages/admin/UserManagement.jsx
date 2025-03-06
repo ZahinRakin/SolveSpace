@@ -38,7 +38,11 @@ function UserManagement() {
 
   const removeUser = async (userType, id) => {
     try {
-      const response = await axios.delete(`/api/v1/admin/remove-user/${id}`);
+      const response = await axios.delete(`/api/v1/admin/remove-user/${id}`,{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        }
+      });
       if (response.status === 200) {
         if (userType === 'teacher') {
           setTeachers((prevTeachers) => prevTeachers.filter((teacher) => teacher._id !== id));

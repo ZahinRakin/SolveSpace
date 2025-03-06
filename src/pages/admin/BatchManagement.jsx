@@ -1,288 +1,192 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  FaArrowLeft, 
-  FaBook, 
-  FaCalendarAlt, 
-  FaMoneyBillWave, 
-  FaUsers, 
-  FaClock 
-} from "react-icons/fa";
 import AdminDashboardHeader from "./AdminDashboardHeader";
+import fetchData from "../../utils/fetchData"
 
-function TuitionRequestPage() {
+import BatchForm from "../../component/forms/BatchForm";
+import BatchCard from "../../component/cards/BatchCard";
+import LoadingSpinner from "../../component/LoadingSpinner";
+import ErrorMessage from "../../component/ErrorMessage";
+
+function BatchManagement() {
+  const [batches, setBatches] = useState([]);
+  const [showStudents, setShowStudents] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    owner_id: "", 
+    owner: "", 
+    teacher_id: "", 
+
+    subject: "",
+
+    class: "",
+    
+    weekly_schedule: [],
+    time: "10:00 AM",
+    salary: 0,
+    time_to_pay: false,
+
+    is_continuous: false,
+    is_batch: false,
+    student_ids:[]
+  });
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    subject: "",
-    class: "",
-    title: "",
-    subtitle: "",
-    description: "",
-    days: [],
-    time: "",
-    price: "",
-    maxBatchSize: "",
-    is_continuous: false,
-    is_batch: false
-  });
+  const path = "/api/v1/admin/batches";
+  const redirectLink = "/admin/batches";
+  useEffect(() => {
+    const fetchDataAsync = async () => {
+      await fetchData(path, redirectLink, setBatches, setIsLoading, setError, navigate);
+    };
+    
+    fetchDataAsync();
+  }, []);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : type === "number" ? Number(value) : value,
-    });
+  const addBatch = async (formData) => {
+    try {
+      const response = await axios.post("/api/v1/admin/add-batch", formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        }
+      });
+      if (response.status === 201) {
+        setShowForm(false);
+        alert('User added successfully');
+      }
+    } catch (error) {
+      setError("Failed to add user. Please try again.");
+    }
   };
 
-  const handleCheckboxChange = (day) => {
-    setFormData((prevData) => {
-      const days = prevData.days.includes(day)
-        ? prevData.days.filter((d) => d !== day)
-        : [...prevData.days, day];
-      return { ...prevData, days };
-    });
-  };
-
-  const handlePost = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const deleteBatch = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this batch?")) return;
     
     try {
+      setIsLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      await axios.post(
-        "/api/v1/post/create",
-        formData,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      
-      // Success notification
-      const notification = document.getElementById("notification");
-      notification.innerText = "Post submitted successfully!";
-      notification.className = "fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out";
-      
-      // Hide notification after 3 seconds
-      setTimeout(() => {
-        notification.className = "fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out translate-y-[-100px]";
-      }, 3000);
-      
-      // Navigate after notification
-      setTimeout(() => {
-        navigate("/user/posts");
-      }, 3500);
-      
+      await axios.delete(`/api/v1/admin/remove-batch/${id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      await fetchData(path, redirectLink, setBatches, setIsLoading, setError, navigate);
     } catch (error) {
-      console.error("Error posting data:", error);
-      
-      // Error notification
-      const notification = document.getElementById("notification");
-      notification.innerText = error.response?.data?.message || "Failed to submit post. Please try again.";
-      notification.className = "fixed top-4 right-4 bg-red-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out";
-      
-      // Hide notification after 3 seconds
-      setTimeout(() => {
-        notification.className = "fixed top-4 right-4 bg-red-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out translate-y-[-100px]";
-      }, 3000);
-    } finally {
-      setIsSubmitting(false);
+      console.error("Failed to delete batch", error);
+      alert("Failed to delete batch. Please try again.");
+      setIsLoading(false);
     }
   };
 
-  const formSections = [
-    {
-      title: "Basic Information",
-      icon: <FaBook className="text-indigo-600" />,
-      fields: [
-        { label: "Subject", name: "subject", type: "text", placeholder: "e.g. Mathematics, Science, English" },
-        { label: "Class/Grade", name: "class", type: "text", placeholder: "e.g. 10th Grade, College Level" },
-        { label: "Title", name: "title", type: "text", placeholder: "A brief, catchy title for your tuition post" },
-        { label: "Subtitle", name: "subtitle", type: "text", placeholder: "Additional short description" },
-      ]
-    },
-    {
-      title: "Tuition Details",
-      icon: <FaCalendarAlt className="text-indigo-600" />,
-      fields: [
-        { label: "Description", name: "description", type: "textarea", placeholder: "Provide detailed information about your teaching approach, materials covered, etc." },
-      ]
-    },
-    {
-      title: "Schedule & Payment",
-      icon: <FaMoneyBillWave className="text-indigo-600" />,
-      fields: [
-        { label: "Class Time", name: "time", type: "time", placeholder: "" },
-        { label: "Price per Class", name: "price", type: "number", placeholder: "Amount in your local currency" },
-      ]
+  const handleShowStudents = (students) => {
+    if (showInterestedStudents === students) {
+      setShowStudents(null);
+    } else {
+      setShowStudents(students);
     }
-  ];
+  };
 
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addBatch(formData);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <AdminDashboardHeader />
-      
-      {/* Notification */}
-      <div id="notification" className="fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out translate-y-[-100px]"></div>
-      
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
+      <AdminDashboardHeader/>
+      {/*Modal for batch form */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-full max-h-[80vh] overflow-auto transform transition-all">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-900">Add New Batch</h3>
+              <button 
+                onClick={() => setShowForm(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <BatchForm
+                formData={formData} 
+                setFormData={setFormData} 
+                passwordVisible={passwordVisible} 
+                setPasswordVisible={setPasswordVisible} 
+                handleSubmit={handleSubmit} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">batch Management</h1>
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center justify-center px-4 py-2 bg-white text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50 transition-colors"
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            <FaArrowLeft className="mr-2" /> Back
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            New Batch
           </button>
-          <h1 className="text-3xl font-bold ml-4 text-gray-800">Create Tuition Request</h1>
         </div>
 
-        <form
-          className="bg-white shadow-md rounded-lg overflow-hidden"
-          onSubmit={handlePost}
-        >
-          <div className="p-6 border-b border-gray-200">
-            <p className="text-gray-600">
-              Create a detailed tuition request to find the right tutor. The more information you provide, the better matches you'll receive.
-            </p>
+        {/* Loading and Error States */}
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner />
           </div>
+        )}
 
-          {formSections.map((section, index) => (
-            <div key={index} className="p-6 border-b border-gray-200">
-              <div className="flex items-center mb-4">
-                {section.icon}
-                <h2 className="text-xl font-semibold ml-2 text-gray-800">{section.title}</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {section.fields.map(field => (
-                  <div key={field.name} className={field.type === "textarea" ? "col-span-1 md:col-span-2" : ""}>
-                    <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-1">
-                      {field.label}
-                    </label>
-                    
-                    {field.type === "textarea" ? (
-                      <textarea
-                        id={field.name}
-                        name={field.name}
-                        rows="4"
-                        value={formData[field.name]}
-                        onChange={handleChange}
-                        placeholder={field.placeholder}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        required
-                      />
-                    ) : (
-                      <input
-                        type={field.type}
-                        id={field.name}
-                        name={field.name}
-                        value={formData[field.name]}
-                        onChange={handleChange}
-                        placeholder={field.placeholder}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        required
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Additional fields for Schedule section */}
-              {section.title === "Schedule & Payment" && (
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Available Days</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                    {days.map((day) => (
-                      <div 
-                        key={day} 
-                        className={`flex items-center justify-center p-3 rounded-md cursor-pointer border transition-colors ${
-                          formData.days.includes(day) 
-                            ? "bg-indigo-100 border-indigo-500 text-indigo-700" 
-                            : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                        onClick={() => handleCheckboxChange(day)}
-                      >
-                        <FaClock className={`mr-2 ${formData.days.includes(day) ? "text-indigo-500" : "text-gray-400"}`} />
-                        <span className="text-sm font-medium">{day.substring(0, 3)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {error && (
+          <div className="mb-8">
+            <ErrorMessage message={error} />
+          </div>
+        )}
+
+        {!isLoading && batches.length === 0 && !error && (
+          <div className="text-center py-16 bg-white rounded-lg shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">No batches found</h3>
+            <p className="mt-1 text-sm text-gray-500">Get started by creating a new batch.</p>
+            <div className="mt-6">
+              <button
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Create a Batch
+              </button>
             </div>
+          </div>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {batches.map((batch) => (
+            <BatchCard
+              key={batch._id}
+              batch={batch}
+              is_editable={false}
+              setEditablePost={()=>{}}
+              deleteBatch={deleteBatch}
+              handleShowStudents={handleShowStudents}
+              show_pay={false}
+              handlePay={() => {}}
+            />
           ))}
-          
-          {/* Class Type Options */}
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <FaUsers className="text-indigo-600 mr-2" />
-              Preferences
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-gray-300 rounded-lg p-4 hover:border-indigo-500 transition-colors">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_continuous"
-                    name="is_continuous"
-                    checked={formData.is_continuous}
-                    onChange={handleChange}
-                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 rounded"
-                  />
-                  <label htmlFor="is_continuous" className="ml-2 block text-sm font-medium text-gray-700">
-                    Need Continuous Tuition
-                  </label>
-                </div>
-                <p className="mt-2 text-sm text-gray-500 pl-7">
-                  Ongoing tuition that continues until your learning goals are met.
-                </p>
-              </div>
-              
-              <div className="border border-gray-300 rounded-lg p-4 hover:border-indigo-500 transition-colors">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_batch"
-                    name="is_batch"
-                    checked={formData.is_batch}
-                    onChange={handleChange}
-                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 rounded"
-                  />
-                  <label htmlFor="is_batch" className="ml-2 block text-sm font-medium text-gray-700">
-                    Group/Batch Tuition
-                  </label>
-                </div>
-                <p className="mt-2 text-sm text-gray-500 pl-7">
-                  Prefer tuition in a group setting with other students.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Submit Button */}
-          <div className="p-6 flex justify-center">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`px-8 py-3 rounded-md text-white font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                isSubmitting ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
-            >
-              {isSubmitting ? "Submitting Request..." : "Submit Tuition Request"}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
 }
 
-export default TuitionRequestPage;
+export default BatchManagement;

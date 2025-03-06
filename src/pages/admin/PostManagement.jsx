@@ -11,7 +11,6 @@ import ErrorMessage from "../../component/ErrorMessage";
 
 function PostManagement() {
   const [posts, setPosts] = useState([]);
-  const [showInterestedStudents, setShowInterestedStudents] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -50,9 +49,11 @@ function PostManagement() {
     fetchDataAsync();
   }, []);
 
-  const addPost = async (formData) => {
+  const addPost = async () => {
+    console.log("inside add post: ",formData); //here formData has attribures and values
+    console.log("inside add post: formdata instance: ", typeof formData); //debugging log
     try {
-      const response = await axios.post("/api/v1/admin/add-post", formData, {
+      const response = await axios.post("/api/v1/admin/add-post", formData, { // but when i send it to the backend it shows undefined
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
@@ -62,7 +63,7 @@ function PostManagement() {
         alert('User added successfully');
       }
     } catch (error) {
-      setError("Failed to add user. Please try again.");
+      setError("Failed to add Post. Please try again.");
     }
   };
 
@@ -85,17 +86,9 @@ function PostManagement() {
     }
   };
 
-  const handleInterestedStudentsClick = (students) => {
-    if (showInterestedStudents === students) {
-      setShowInterestedStudents(null);
-    } else {
-      setShowInterestedStudents(students);
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    addPost(formData);
+    addPost();
   };
 
   return (
@@ -106,7 +99,7 @@ function PostManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-full max-h-[80vh] overflow-auto transform transition-all">
             <div className="flex justify-between items-center p-6 border-b">
-              <h3 className="text-xl font-semibold text-gray-900">Add New User</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Add New Post</h3>
               <button 
                 onClick={() => setShowForm(false)}
                 className="text-gray-400 hover:text-gray-500"
@@ -182,7 +175,8 @@ function PostManagement() {
               is_editable={false}
               setEditablePost={()=>{}}
               deletePost={deletePost}
-              handleInterestedStudentsClick={handleInterestedStudentsClick}
+              show_accept_teacher={false}
+              acceptTeacher={()=>{}}
             />
           ))}
         </div>
