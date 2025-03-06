@@ -6,14 +6,12 @@ import logo from "/just-logo.png";
 
 function StudentDashboardHeader() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
   const menuRef = useRef(null);
   const accountButtonRef = useRef(null);
   const navigate = useNavigate();
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    getNotificationCount();
     function handleClickOutside(event) {
       if (
         menuRef.current && 
@@ -24,7 +22,6 @@ function StudentDashboardHeader() {
         setShowAccountMenu(false);
       }
     }
-    
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -38,19 +35,6 @@ function StudentDashboardHeader() {
     { to: "/student/posts", icon: <FaBook className="mr-2" />, text: "Your Posts" },
     { to: "/student/batches", icon: <FaUsers className="mr-2" />, text: "Your Batches" }
   ];
-
-  async function getNotificationCount() {
-    try {
-      const response = await axios.get("/api/v1/notifications/getnotifications", {
-        headers: {
-          withCredentials: true,
-        }
-      });
-      setNotificationCount(response.data.data.length);//debug later. not imp
-    } catch (error) {
-      console.error("Error fetching notification count", error);
-    }
-  }
 
 
   return (
@@ -88,7 +72,6 @@ function StudentDashboardHeader() {
             {/* Notifications */}
             <Link to="/notification" className="relative p-2 text-gray-600 hover:text-indigo-600 transition-colors">
               <FaBell className="text-xl" />
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">{notificationCount}</span>
             </Link>
 
             {/* Account Dropdown */}

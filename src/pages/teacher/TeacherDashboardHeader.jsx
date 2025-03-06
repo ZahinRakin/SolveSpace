@@ -6,14 +6,12 @@ import logo from "/just-logo.png";
 
 function TeacherDashboardHeader() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
   const menuRef = useRef(null);
   const accountButtonRef = useRef(null);
   const navigate = useNavigate();
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    getNotificationCount();
     function handleClickOutside(event) {
       if (
         menuRef.current && 
@@ -24,7 +22,6 @@ function TeacherDashboardHeader() {
         setShowAccountMenu(false);
       }
     }
-    
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -38,19 +35,6 @@ function TeacherDashboardHeader() {
     { to: "/teacher/posts", icon: <FaBook className="mr-2" />, text: "Your Posts" },
     { to: "/teacher/batches", icon: <FaUsers className="mr-2" />, text: "Your Batches" }
   ];
-
-  async function getNotificationCount() {
-    try {
-      const response = await axios.get("/api/v1/notifications/getnotifications", {
-        headers: {
-          withCredentials: true,
-        }
-      });
-      setNotificationCount(response.data.data.length);
-    } catch (error) {
-      console.error("Error fetching notification count", error);
-    }
-  }
 
 
   return (

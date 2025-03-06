@@ -91,6 +91,26 @@ function PostManagement() {
     addPost();
   };
 
+    // Loading State
+  if (isLoading) {
+    return (
+      <div>
+        <AdminDashboardHeader/>
+        <LoadingSpinner/>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AdminDashboardHeader/>
+        <ErrorMessage message={error}/>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminDashboardHeader/>
@@ -135,19 +155,6 @@ function PostManagement() {
             New Post
           </button>
         </div>
-
-        {/* Loading and Error States */}
-        {isLoading && (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner />
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-8">
-            <ErrorMessage message={error} />
-          </div>
-        )}
 
         {!isLoading && posts.length === 0 && !error && (
           <div className="text-center py-16 bg-white rounded-lg shadow">
