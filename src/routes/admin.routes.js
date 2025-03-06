@@ -30,8 +30,9 @@ router.route("/remove-post/:post_id").delete(verifyJWT, removePost);
 router.route("/add-post").post(verifyJWT, addPost);
 //batches
 router.route("/batches").get(verifyJWT, viewAllBatches);
-router.route("/remove-post/:post_id").delete(verifyJWT, removeBatch);
-router.route("/add-post").post(verifyJWT, addBatch);
+router.route("/remove-batch/:batch_id").delete(verifyJWT, removeBatch);
+router.route("/add-batch").post(verifyJWT, addBatch);
+//report
 router.route("/get-all-reports").get(verifyJWT, getAllReports);
 
 

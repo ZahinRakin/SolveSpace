@@ -155,37 +155,87 @@ const viewAllBatches = asyncHandler(async (req, res) => {
 });
 
 const removeBatch = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  const course = await Batch.findById(id);
-
-  if (!course) {
+  const { role } = req.user;
+  if (role !== "admin") {
     return res
-      .status(404)
-      .json(new ApiError(404, "Course not found."));
+      .status(401)
+      .json(new ApiResponse(401, null, "Unauthorized access"));
   }
 
-  await course.deleteOne();
+  const { batch_id } = req.params;
+  const batch = await Batch.findById(batch_id);
+
+  if (!batch) {
+    return res
+      .status(404)
+      .json(new ApiError(404, "Batch not found."));
+  }
+
+  await batch.deleteOne();
   res
     .status(200)
-    .json(new ApiResponse(200, "Course removed successfully", "success"));
+    .json(new ApiResponse(200, null, `Batch [${batch_id}] deleted successfully`));
 });
 
 const addBatch = asyncHandler(async (req, res) => {
-  const { teacher_id, subject, class: className, schedule, time, student_ids } = req.body;
+  const { role } = req.user;
+  if (role !== "admin") {
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "Unauthorized access"));
+  }
 
-  const course = await Batch.create({
-    teacher_id,
-    subject,
-    class: className,
-    schedule,
-    time,
-    student_ids
-  });
+  const batchInfo = req.body;
 
-  res
-    .status(201)
-    .json(new ApiResponse(201, course, "Course added successfully"));
+  if (!batchInfo) {
+    return res
+      .status(400) // Bad Request
+      .json(new ApiResponse(400, null, "No data provided."));
+  }
+
+  const user = await User.findById(batchInfo.owner_id).select("_id").lean();
+  if (!user) {
+    return res
+      .status(404) // Not Found
+      .json(new ApiResponse(404, null, "Owner ID doesn't exist."));
+  }
+
+  const student_usernames = batchInfo.student_usernames;
+
+  let student_ids = await Promise.all(
+    student_usernames.map(async (username) => {
+      const user = await User.findOne({ username }).select("_id");
+      return user ? user._id : null; // Handle user not found
+    })
+  );
+
+  console.log("inside admin add post: ", batchInfo); //debugging log
+
+  const allowedInfo = [
+    "owner_id", "owner", "teacher_id", "subject", "class", "weekly_schedule", "time", "salary", "time_to_pay", "is_continuous", 
+    "is_batch", "student_ids"
+  ];
+
+  const sanitizedInfo = Object.keys(batchInfo)
+    .filter((key) => allowedInfo.includes(key))
+    .reduce((obj, key) => {
+      obj[key] = batchInfo[key];
+      return obj;
+    }, {});
+
+  sanitizedInfo.student_ids = student_ids;
+
+  try {
+    const batch = await Batch.create(sanitizedInfo);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, batch, "Batch has been created."));
+  } catch (error) {
+    console.log(error.message);
+    return res
+      .status(500) // Internal Server Error
+      .json(new ApiResponse(500, null, error.message || "An error occurred while creating the batch."));
+  }
 });
 
 const viewAllPosts = asyncHandler(async (req, res) => {
@@ -198,6 +248,8 @@ const viewAllPosts = asyncHandler(async (req, res) => {
   const allPosts = await Post
     .find({})
     .populate("owner_id", "username")
+    .populate("interested_teachers", "username")
+    .populate("interested_students", "username")
     .lean();
   
   return res
@@ -219,28 +271,80 @@ const removePost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, `post[${post_id}] deleted successfully`));
 
 });
+
 const addPost = asyncHandler(async (req, res) => {
   const { role } = req.user;
-  if(role !== "admin"){
+  if (role !== "admin") {
     return res
-      .status(400)
-      .json(new ApiResponse(400, null, "Unauthorized access"));
+      .status(401)
+      .json(new ApiResponse(401, null, "Unauthorized access"));
   }
-  const { postInfo } = req.body;
-  const allowedInfo = ["owner_id", "owner", "subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
+
+  const postInfo = req.body;
+
+  if (!postInfo) {
+    return res
+      .status(400) // Bad Request
+      .json(new ApiResponse(400, null, "No data provided."));
+  }
+
+  const user = await User.findById(postInfo.owner_id).select("_id").lean();
+  if (!user) {
+    return res
+      .status(404) // Not Found
+      .json(new ApiResponse(404, null, "Owner ID doesn't exist."));
+  }
+
+  const teacher_usernames = postInfo.interested_teachers;
+  const student_usernames = postInfo.interested_students;
+
+  let interested_teachers = await Promise.all(
+    teacher_usernames.map(async (username) => {
+      const user = await User.findOne({ username }).select("_id");
+      return user ? user._id : null; // Handle user not found
+    })
+  );
+
+  let interested_students = await Promise.all(
+    student_usernames.map(async (username) => {
+      const user = await User.findOne({ username }).select("_id");
+      return user ? user._id : null; // Handle user not found
+    })
+  );
+
+  console.log("inside admin add post: ", postInfo); //debugging log
+
+  const allowedInfo = [
+    "owner_id", "owner", "subject", "class", "title", "subtitle", 
+    "description", "weekly_schedule", "time", "salary", "is_continuous", 
+    "is_batch", "max_size"
+  ];
 
   const sanitizedInfo = Object.keys(postInfo)
-    .filter(key => allowedInfo.includes(key))  // Fixed method to 'includes()'
+    .filter((key) => allowedInfo.includes(key))
     .reduce((obj, key) => {
       obj[key] = postInfo[key];
       return obj;
     }, {});
 
-  const post = await Post.create(sanitizedInfo);
-  return res
-    .status(200)
-    .json(new ApiResponse(200, post, "Post has been created."));
+  sanitizedInfo.interested_teachers = interested_teachers;
+  sanitizedInfo.interested_students = interested_students;
+
+  console.log("inside admin add post: ", sanitizedInfo); //debugging log
+
+  try {
+    const post = await Post.create(sanitizedInfo);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, post, "Post has been created."));
+  } catch (error) {
+    console.log(error.message);
+    return res
+      .status(500) // Internal Server Error
+      .json(new ApiResponse(500, null, error.message || "An error occurred while creating the post."));
+  }
 });
+
 
 const getAllReports = asyncHandler(async (req, res) => {
   try {
