@@ -69,6 +69,16 @@ function StudentPosts() {
     }
   };
 
+
+  async function acceptTeacher(post_id, userTeacher_id){
+    try{
+
+    }catch(error){
+      console.error("Error accepting teacher: ", error);
+      setError("Failed to accept teacher.");
+    }
+  }
+
   const deletePost = async (id) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     

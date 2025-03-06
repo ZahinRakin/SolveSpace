@@ -181,9 +181,14 @@ function PostManagement() {
               post={post}
               is_editable={false}
               setEditablePost={()=>{}}
+              show_delete={true}
               deletePost={deletePost}
               show_accept_teacher={false}
               acceptTeacher={()=>{}}
+              show_join_button={false}
+              handleJoin={() => {}}
+              show_leave_button={false}
+              handleLeave={() => {}}
             />
           ))}
         </div>

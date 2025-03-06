@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const PostCard = ({ post, is_editable, setEditablePost, deletePost, show_accept_teacher, acceptTeacher }) => {
+const PostCard = ({ post, is_editable, setEditablePost, show_delete, deletePost, show_accept_teacher, acceptTeacher, show_join_button, handleJoin, show_leave_button, handleLeave}) => {
   const [showInterestedStudents, setShowInterestedStudents] = useState(false);
   const [showInterestedTeachers, setShowInterestedTeachers] = useState(false);
 
@@ -152,12 +152,30 @@ const PostCard = ({ post, is_editable, setEditablePost, deletePost, show_accept_
             Edit
           </button>
         )}
-        <button 
-          onClick={() => deletePost(post._id)} 
-          className="px-3 py-1.5 border rounded-md text-red-700 bg-red-100 hover:bg-red-200"
-        >
-          Delete
-        </button>
+        {show_join_button && (
+          <button
+            onClick={() => handleJoin(post._id)}
+            className={`joinORleave-${post._id} px-3 py-1.5 border rounded-md text-gray-700 bg-green hover:text-gray-500`}
+          >
+            Join
+          </button>
+        )}
+        {show_leave_button && (
+          <button
+            onClick={() => handleLeave(post._id)}
+            className={`joinORleave-${post._id} px-3 py-1.5 border rounded-md text-gray-700 bg-green hover:text-gray-500`}
+          >
+            Leave
+          </button>
+        )}
+        {show_delete && (
+          <button 
+            onClick={() => deletePost(post._id)} 
+            className="px-3 py-1.5 border rounded-md text-red-700 bg-red-100 hover:bg-red-200"
+          >
+            Delete
+          </button>
+        )}
       </div>
     </div>
   );
