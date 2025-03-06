@@ -122,6 +122,13 @@ function StudentPosts() {
     return (owner_id === user._id);
   }
 
+  function doesOwnPost(post_id){
+    return post_id === user._id;
+  }
+  function isInPost(interested_students) {
+    return interested_students.some(st => st._id === user._id);
+  }
+
   // Loading State
   if (isLoading) {
     return (
@@ -182,15 +189,15 @@ function StudentPosts() {
             <PostCard
               key={post._id}
               post={post}
-              is_editable={true}
+              is_editable={doesOwnPost(post.owner_id)}
               setEditablePost={setEditablePost}
               show_delete={doesOwnPost(post.owner_id)}
               deletePost={deletePost}
               show_accept_teacher={doesOwnPost(post.owner_id)}
               acceptTeacher={acceptTeacher}
-              show_join_button={!doesOwnPost(post.owner_id)}
+              show_join_button={!doesOwnPost(post._id) && !isInPost(post.interested_students)}
               handleJoin={(post_id)=>handleJoin(post_id, setIsLoading, setError, fetchPosts)}
-              show_leave_button={!doesOwnPost(post.owner_id)}
+              show_leave_button={!doesOwnPost(post._id) && isInPost(post.interested_students)}
               handleLeave={(post_id)=>handleLeave(post_id, setIsLoading, setError, fetchPosts)}
             />
           ))}

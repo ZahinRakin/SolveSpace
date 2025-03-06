@@ -7,11 +7,11 @@ async function getUser(setUser) {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       }
     });
-    setUser(response.data.data); // Store data in state
-    console.log("studentposts: user: ", response.data.data); // Debug log
+    setUser(prevUser => response.data.data);
   } catch (error) {
     console.error("Error fetching user data:", error);
   }
 }
+
 
 export default getUser;

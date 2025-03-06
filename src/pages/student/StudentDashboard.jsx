@@ -8,11 +8,13 @@ import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../component/LoadingSpinner.jsx";
 import PostCard from "../../component/cards/PostCard.jsx";
 import { handleJoin, handleLeave } from "../../utils/batchJoin_leave.js";
+import getUser from "../../utils/getUser.js";
 
 function StudentDashboard() {
   const [recommendedPosts, setRecommendedPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const fetchRecommendedCourses = async () => {
@@ -22,6 +24,7 @@ function StudentDashboard() {
   };
 
   useEffect(() => {
+    getUser(setUser);
     fetchRecommendedCourses();
   }, []);
 
@@ -43,6 +46,13 @@ function StudentDashboard() {
         <ErrorMessage message={error}/>
       </div>
     );
+  }
+
+  function doesOwnPost(post_id){
+    return post_id === user._id;
+  }
+  function isInPost(interested_students) {
+    return interested_students.some(st => st._id === user._id);
   }
 
   return (
@@ -68,14 +78,14 @@ function StudentDashboard() {
                 key={post._id}
                 post={post}
                 is_editable={false}
-                setEditablePost={()=>{}}
+                setEditablePost={null}
                 show_delete={false}
-                deletePost={()=>{}}
+                deletePost={null}
                 show_accept_teacher={false}
-                acceptTeacher={()=>{}}
-                show_join_button={true}
+                acceptTeacher={null}
+                show_join_button={!doesOwnPost(post._id) && !isInPost(post.interested_students)}
                 handleJoin={(post_id)=>handleJoin(post_id, setIsLoading, setError, fetchRecommendedCourses)}
-                show_leave_button={true}
+                show_leave_button={!doesOwnPost(post._id) && isInPost(post.interested_students)}
                 handleLeave={(post_id)=>handleLeave(post_id, setIsLoading, setError, fetchRecommendedCourses)}
               />
             ))}
