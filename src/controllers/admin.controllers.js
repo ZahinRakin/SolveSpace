@@ -200,7 +200,7 @@ const addBatch = asyncHandler(async (req, res) => {
       .json(new ApiResponse(404, null, "Owner ID doesn't exist."));
   }
 
-  const student_usernames = batchInfo.student_usernames;
+  const student_usernames = batchInfo.student_ids;
 
   let student_ids = await Promise.all(
     student_usernames.map(async (username) => {
@@ -209,11 +209,9 @@ const addBatch = asyncHandler(async (req, res) => {
     })
   );
 
-  console.log("inside admin add post: ", batchInfo); //debugging log
 
   const allowedInfo = [
-    "owner_id", "owner", "teacher_id", "subject", "class", "weekly_schedule", "time", "salary", "time_to_pay", "is_continuous", 
-    "is_batch", "student_ids"
+    "owner_id", "owner", "teacher_id", "subject", "class", "weekly_schedule", "time", "salary", "time_to_pay", "is_continuous", "is_batch"
   ];
 
   const sanitizedInfo = Object.keys(batchInfo)
