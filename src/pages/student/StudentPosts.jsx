@@ -17,6 +17,19 @@ function StudentPosts() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+    subject: "",
+    class: "",
+    title: "",
+    subtitle: "",
+    description: "",
+    days: [],
+    time: "",
+    price: "",
+    maxBatchSize: "",
+    is_continuous: false,
+    is_batch: false
+  });
 
   useEffect(() => {
     getUser(setUser);
