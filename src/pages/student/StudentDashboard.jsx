@@ -7,6 +7,7 @@ import ErrorMessage from "../../component/ErrorMessage.jsx";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../component/LoadingSpinner.jsx";
 import PostCard from "../../component/cards/PostCard.jsx";
+import { handleJoin, handleLeave } from "../../utils/batchJoin_leave.js";
 
 function StudentDashboard() {
   const [recommendedPosts, setRecommendedPosts] = useState([]);
@@ -23,46 +24,6 @@ function StudentDashboard() {
   useEffect(() => {
     fetchRecommendedCourses();
   }, []);
-
-  async function handleJoin(post_id){
-    try {
-      setIsLoading(true);
-      await applyToJoin(post_id);
-      await fetchRecommendedCourses();
-    } catch (error) {
-      console.error("Error Joining the batch: ", error);
-      setError("Failed to Join the batch");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-  async function handleLeave(post_id){
-    try {
-      setIsLoading(true);
-      await applyToExit(post_id);
-      await fetchRecommendedCourses();
-    } catch (error) {
-      console.error("Error Leaving the batch: ", error);
-      setError("Failed to Leave the batch");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function applyToJoin(post_id){
-    await axios.post(`/api/v1/post/student/apply/${post_id}`, {}, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
-      }
-    })
-  }
-  async function applyToExit(post_id){
-    await axios.delete(`/api/v1/post/student/retract/${post_id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`
-      }
-    })
-  }
 
   // Loading State
   if (isLoading) {
@@ -113,9 +74,9 @@ function StudentDashboard() {
                 show_accept_teacher={false}
                 acceptTeacher={()=>{}}
                 show_join_button={true}
-                handleJoin={handleJoin}
+                handleJoin={(post_id)=>handleJoin(post_id, setIsLoading, setError, fetchRecommendedCourses)}
                 show_leave_button={true}
-                handleLeave={handleLeave}
+                handleLeave={(post_id)=>handleLeave(post_id, setIsLoading, setError, fetchRecommendedCourses)}
               />
             ))}
           </div>

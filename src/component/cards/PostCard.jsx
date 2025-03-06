@@ -131,7 +131,7 @@ const PostCard = ({ post, is_editable, setEditablePost, show_delete, deletePost,
                 </div>
                 {show_accept_teacher && (
                   <button 
-                    onClick={() => acceptTeacher(teacher._id)}
+                    onClick={() => acceptTeacher(post._id, teacher._id)}
                     className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
                   >
                     Accept

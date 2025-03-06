@@ -1,56 +1,33 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import ErrorMessage from "../../component/ErrorMessage.jsx";
 import { useNavigate } from "react-router-dom";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
 import StudentDashboardHeader from "./StudentDashboardHeader";
+import PostCard from "../../component/cards/PostCard.jsx";
+import fetchData from "../../utils/fetchData.js";
+import getUser from "../../utils/getUser.js";
+import { handleJoin, handleLeave } from "../../utils/batchJoin_leave.js";
+
 
 function StudentPosts() {
   const [userPosts, setUserPosts] = useState([]);
   const [editablePost, setEditablePost] = useState(null);
-  const [showInterestedStudents, setShowInterestedStudents] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    getUser(setUser);
+    console.log("studentposts: user: ", user); //debugging log
     fetchPosts();
   }, []);
 
   async function fetchPosts() {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("/api/v1/post/posts", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      setUserPosts(response.data.data);
-    } catch (error) {
-      if (error.message === "Unauthorized user" || error.response?.status === 401) {
-        try {
-          const response = await axios.post("/api/v1/refresh-accesstoken", {}, {
-            withCredentials: true,
-          });
-          const accessToken = response.data.data.accessToken;
-          localStorage.setItem("accessToken", accessToken);
-          const retryResponse = await axios.get("/api/v1/post/posts", {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
-          setUserPosts(retryResponse.data.data);
-        } catch (refreshError) {
-          console.error("Failed to refresh token", refreshError);
-          setError("Session expired. Please log in again.");
-          navigate("/user/posts");
-        }
-      } else {
-        setError("Failed to load posts. Please try again later.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    const path = "/api/v1/post/posts";
+    const redirectLink = "student/posts"
+    await fetchData(path, redirectLink, setUserPosts, setIsLoading, setError, navigate);
   }
 
   const updatePost = async (id, updatedData) => {
@@ -72,10 +49,18 @@ function StudentPosts() {
 
   async function acceptTeacher(post_id, userTeacher_id){
     try{
-
+      setIsLoading(true);
+      await axios.post(`/api/v1/post/student/accept/${post_id}/${userTeacher_id}`,{},{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        }
+      });
+      await fetchPosts();
     }catch(error){
       console.error("Error accepting teacher: ", error);
       setError("Failed to accept teacher.");
+    }finally{
+      setIsLoading(false);
     }
   }
 
@@ -120,28 +105,29 @@ function StudentPosts() {
     }
   };
 
-  const handleInterestedStudentsClick = (students) => {
-    if (showInterestedStudents === students) {
-      setShowInterestedStudents(null);
-    } else {
-      setShowInterestedStudents(students);
-    }
-  };
+  function doesOwnPost(owner_id){
+    return (owner_id === user._id);
+  }
 
-  const getStatusBadge = (post) => {
-    if (post.interested_students && post.interested_students.length > 0) {
-      return (
-        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
-          {post.interested_students.length} Interested
-        </span>
-      );
-    }
+  // Loading State
+  if (isLoading) {
     return (
-      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-        Active
-      </span>
+      <div>
+        <StudentDashboardHeader/>
+        <LoadingSpinner/>
+      </div>
     );
-  };
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <StudentDashboardHeader/>
+        <ErrorMessage message={error}/>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -150,7 +136,7 @@ function StudentPosts() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Your Tuition Posts</h1>
           <button
-            onClick={() => navigate('/create-post')}
+            onClick={() => navigate('/create-post')} //have to construct
             className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -159,27 +145,6 @@ function StudentPosts() {
             New Post
           </button>
         </div>
-
-        {isLoading && userPosts.length === 0 && (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {!isLoading && userPosts.length === 0 && !error && (
           <div className="text-center py-16 bg-white rounded-lg shadow">
@@ -201,110 +166,20 @@ function StudentPosts() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {userPosts.map((post) => (
-            <div key={post._id} className="bg-white overflow-hidden shadow rounded-lg relative">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 truncate">{post.title}</h2>
-                    <p className="text-sm text-gray-500 mt-1">{post.subtitle}</p>
-                  </div>
-                  {getStatusBadge(post)}
-                </div>
-                
-                <div className="mt-4 space-y-2">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div>
-                      <span className="text-gray-500">Subject:</span> 
-                      <span className="ml-1 font-medium text-gray-900">{post.subject}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Class:</span> 
-                      <span className="ml-1 font-medium text-gray-900">{post.class}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Time:</span> 
-                      <span className="ml-1 font-medium text-gray-900">{post.time}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Salary:</span> 
-                      <span className="ml-1 font-medium text-gray-900">{post.salary}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-gray-500">Days:</span> 
-                      <span className="ml-1 font-medium text-gray-900">{post.weekly_schedule.join(", ")}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <p className="text-sm text-gray-500 line-clamp-2">{post.description}</p>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {post.is_continuous && (
-                      <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                        Continuous
-                      </span>
-                    )}
-                    {post.is_batch && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                        Batch ({post.max_size} max)
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-                {post.interested_students && post.interested_students.length > 0 && (
-                  <div className="mt-4">
-                    <button
-                      onClick={() => handleInterestedStudentsClick(post.interested_students)}
-                      className="flex items-center text-sm text-indigo-600 hover:text-indigo-500"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                      </svg>
-                      View {post.interested_students.length} interested students
-                    </button>
-                    
-                    {showInterestedStudents === post.interested_students && (
-                      <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
-                        <h3 className="font-medium text-sm text-gray-700 mb-2">Interested Students</h3>
-                        <ul className="space-y-1">
-                          {post.interested_students.map((student, index) => (
-                            <li key={index} className="text-sm flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                              </svg>
-                              {student.name}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              <div className="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-200 flex justify-between">
-                <button
-                  onClick={() => setEditablePost(post)}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition duration-150 ease-in-out"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                  Edit
-                </button>
-                <button
-                  onClick={() => deletePost(post._id)}
-                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-5 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:border-red-300 focus:shadow-outline-red active:bg-red-200 transition duration-150 ease-in-out"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  Delete
-                </button>
-              </div>
-            </div>
+            <PostCard
+              key={post._id}
+              post={post}
+              is_editable={true}
+              setEditablePost={setEditablePost}
+              show_delete={doesOwnPost(post.owner_id)}
+              deletePost={deletePost}
+              show_accept_teacher={doesOwnPost(post.owner_id)}
+              acceptTeacher={acceptTeacher}
+              show_join_button={!doesOwnPost(post.owner_id)}
+              handleJoin={(post_id)=>handleJoin(post_id, setIsLoading, setError, fetchPosts)}
+              show_leave_button={!doesOwnPost(post.owner_id)}
+              handleLeave={(post_id)=>handleLeave(post_id, setIsLoading, setError, fetchPosts)}
+            />
           ))}
         </div>
       </div>
