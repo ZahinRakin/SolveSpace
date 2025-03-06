@@ -53,7 +53,7 @@ function UserManagement() {
 
   const addUser = async (formData) => {
     try {
-      const response = await axios.post("/api/v1/users/register", formData, {
+      const response = await axios.post("/api/v1/admin/add-user", formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
