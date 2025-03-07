@@ -90,7 +90,7 @@ const BatchCard = ({ batch, is_editable, setEditableBatch, deleteBatch, show_pay
         <div className="flex gap-2">
           {show_pay && (
             <button 
-              onClick={() => handlePay(batch._id)} 
+              onClick={() => handlePay(batch)} 
               className="px-3 py-1.5 border rounded-md text-green-700 bg-green-100 hover:bg-green-200"
             >
               Pay

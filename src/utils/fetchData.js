@@ -11,7 +11,9 @@ const fetchData = async (path, redirectLink, setData, setIsLoading, setError, na
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    setData(response.data.data);
+    setData(prev => response.data.data);
+    console.log("fetch data response: ", response.data.data);//debugging log: here I get the response that i expect not an empty array.
+
   } catch (error) {
     if (error.message === "Unauthorized user" || error.response?.status === 401) {
       try {

@@ -8,7 +8,6 @@ import PostCard from "../../component/cards/PostCard.jsx";
 import fetchData from "../../utils/fetchData.js";
 import getUser from "../../utils/getUser.js";
 import { handleJoin, handleLeave } from "../../utils/batchJoin_leave.js";
-import PostForm from "../../component/forms/PostForm.jsx"; //implement this in the editable section if possible. I am trying to reduce code size.
 import EditPostModal from "../../component/modals/EditPostModal.jsx";
 
 
@@ -80,7 +79,8 @@ function StudentPosts() {
       fetchPosts();
     } catch (error) {
       console.error("Failed to delete post", error);
-      alert("Failed to delete post. Please try again.");
+      setError("Failed to delete post. Please try again.: ", error.message);
+    }finally{
       setIsLoading(false);
     }
   };
@@ -170,7 +170,7 @@ function StudentPosts() {
               setEditablePost={setEditablePost}
               show_delete={doesOwnPost(post.owner_id._id)}
               deletePost={deletePost}
-              show_accept_teacher={doesOwnPost(post.owner_id)}
+              show_accept_teacher={doesOwnPost(post.owner_id._id)}
               acceptTeacher={acceptTeacher}
               show_join_button={!doesOwnPost(post.owner_id._id) && !isInPost(post.interested_students)}
               handleJoin={(post_id)=>handleJoin(post._id, setIsLoading, setError, fetchPosts)}

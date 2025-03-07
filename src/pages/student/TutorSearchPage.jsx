@@ -1,8 +1,11 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
 import StudentDashboardHeader from "./StudentDashboardHeader";
+import LoadingSpinner from "../../component/LoadingSpinner";
+import ErrorMessage from "../../component/ErrorMessage";
+import { handleJoin, handleLeave } from "../../utils/batchJoin_leave";
+import getUser from "../../utils/getUser";
 
 function TutorSearchPage() {
   const navigate = useNavigate();
@@ -15,13 +18,64 @@ function TutorSearchPage() {
     weekly_schedule: [],
     time: "",
     salary: "",
-    is_continuous: false,
-    is_batch: false,
+    is_continuous: null,
+    is_batch: null,
     max_size: "",
   });
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const [user, setUser] = useState(null);
+  const path = `/api/v1/post/student/search`;
+
+  useEffect(()=>{
+    getUser(setUser);
+    fetchTeacherPosts(path, {});
+  },[]);
+
+  async function fetchTeacherPosts(path, data){
+    try {
+      setIsLoading(true);
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.get(path, {
+        params: data,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+
+      setRequests(response.data.data || []);
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        try {
+          const refreshResponse = await axios.get("/api/v1/refresh-accesstoken", {
+            withCredentials: true,
+          });
+          const accessToken = refreshResponse.headers['authorization'].replace("Bearer ", "");
+          localStorage.setItem("accessToken", accessToken);
+
+          const retryResponse = await axios.get(path, {
+            params: data,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            }
+          });
+
+          setRequests(retryResponse.data.data || []);
+        } catch (refreshError) {
+          console.error("Refresh token expired. Logging out...");
+          setError("Session expired. Please log in again.");
+          navigate("/student/posts");
+        }
+      } else {
+        console.error("Error fetching tuition requests:", error);
+        setError(error.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -42,47 +96,8 @@ function TutorSearchPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setSearchPerformed(true);
-
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get("/api/v1/post/student/search", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        params: formData,
-      });
-
-      setRequests(response.data.data);
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        try {
-          const refreshResponse = await axios.get("/api/v1/refresh-accesstoken", {
-            withCredentials: true,
-          });
-          const accessToken = refreshResponse.headers['authorization'].split(' ')[1];
-          localStorage.setItem("accessToken", accessToken);
-
-          const retryResponse = await axios.get("/api/v1/post/student/search", {
-            headers: {
-              Authorization: `Bearer ${refreshResponse.data.accessToken}`,
-            },
-            params: formData,
-          });
-
-          setRequests(retryResponse.data);
-        } catch (refreshError) {
-          console.error("Refresh token expired. Logging out...");
-          alert("Session expired. Please log in again.");
-          navigate("/login");
-        }
-      } else {
-        console.error("Error fetching tuition requests:", error);
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    await fetchTeacherPosts(path, formData);
   };
 
   const resetForm = () => {
@@ -100,6 +115,32 @@ function TutorSearchPage() {
       max_size: "",
     });
   };
+
+  function showJoinButton(post){
+    let doesBelong = post.interested_students?.some(st => {
+      return (st._id === user._id);
+    }) || false;
+    console.log(`post ${post._id} should render join button : ${!doesBelong}`);
+    return !doesBelong;
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <StudentDashboardHeader/>
+        <LoadingSpinner/>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <StudentDashboardHeader/>
+        <ErrorMessage message={error}/>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -245,17 +286,7 @@ function TutorSearchPage() {
                 className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200 flex items-center justify-center"
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Searching...
-                  </>
-                ) : (
-                  "Find Tuitions"
-                )}
+                Find Tuitions
               </button>
             </form>
           </div>
@@ -265,14 +296,8 @@ function TutorSearchPage() {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center justify-between">
                 <span>Available Tuition Posts</span>
-                {requests.length > 0 && <span className="text-sm font-normal text-gray-500">{requests.length} results found</span>}
+                { requests.length > 0 && <span className="text-sm font-normal text-gray-500">{requests.length || 0} results found</span>}
               </h2>
-
-              {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-                </div>
-              ) : (
                 <div className="space-y-4">
                   {searchPerformed && requests.length === 0 ? (
                     <div className="text-center py-12">
@@ -282,7 +307,7 @@ function TutorSearchPage() {
                       <h3 className="mt-4 text-lg font-medium text-gray-700">No matching tuition requests</h3>
                       <p className="mt-2 text-gray-500">Try adjusting your search criteria to find more results.</p>
                     </div>
-                  ) : (
+                    ) : (
                     requests.map((req, index) => (
                       <div key={index} className="p-5 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
                         <div className="flex justify-between items-start mb-3">
@@ -330,15 +355,26 @@ function TutorSearchPage() {
                         )}
                         
                         <div className="flex justify-end">
-                          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm transition duration-200">
-                            Apply Now
-                          </button>
+                          {showJoinButton(req) ?
+                            (<button 
+                              onClick={() => handleJoin(req._id, setIsLoading, setError, () => {fetchTeacherPosts(path, formData)})} 
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm transition duration-200"
+                            >
+                              Join
+                            </button>)
+                          : 
+                            (<button 
+                              onClick={() => handleLeave(req._id, setIsLoading, setError, () => {fetchTeacherPosts(path, formData)})} 
+                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition duration-200"
+                            >
+                              Leave
+                            </button>)
+                          }
                         </div>
                       </div>
                     ))
                   )}
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
