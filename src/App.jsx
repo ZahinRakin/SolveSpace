@@ -58,16 +58,16 @@ const router = createBrowserRouter([
     path: "/teacher/dashboard",
     element: <TeacherDashboard/>
   },{
-    path: "/teacher/posts/", 
+    path: "/teacher/posts", 
     element: <TeacherPosts/>
   },{
-    path: "/teacher/batches/", 
+    path: "/teacher/batches", 
     element: <TeacherBatches/>
   },{
-    path: "/student/posts/", 
+    path: "/student/posts", 
     element: <StudentPosts/>
   },{
-    path: "/student/batches/", 
+    path: "/student/batches", 
     element: <StudentBatches/>
   },{
     path: "/admin/dashboard", //admin start

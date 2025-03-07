@@ -10,10 +10,13 @@ import {
   FaClock 
 } from "react-icons/fa";
 import StudentDashboardHeader from "./StudentDashboardHeader";
+import LoadingSpinner from "../../component/LoadingSpinner";
+import ErrorMessage from "../../component/ErrorMessage";
 
 function TuitionRequestPage() {
   const navigate = useNavigate();
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null)
   const [formData, setFormData] = useState({
     subject: "",
     class: "",
@@ -28,7 +31,6 @@ function TuitionRequestPage() {
     is_batch: false
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -49,9 +51,9 @@ function TuitionRequestPage() {
 
   const handlePost = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
     try {
+      setIsLoading(true);
       const accessToken = localStorage.getItem("accessToken");
       await axios.post(
         "/api/v1/post/create",
@@ -61,35 +63,12 @@ function TuitionRequestPage() {
         }
       );
       
-      // Success notification
-      const notification = document.getElementById("notification");
-      notification.innerText = "Post submitted successfully!";
-      notification.className = "fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out";
-      
-      // Hide notification after 3 seconds
-      setTimeout(() => {
-        notification.className = "fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out translate-y-[-100px]";
-      }, 3000);
-      
-      // Navigate after notification
-      setTimeout(() => {
-        navigate("/user/posts");
-      }, 3500);
-      
     } catch (error) {
       console.error("Error posting data:", error);
       
-      // Error notification
-      const notification = document.getElementById("notification");
-      notification.innerText = error.response?.data?.message || "Failed to submit post. Please try again.";
-      notification.className = "fixed top-4 right-4 bg-red-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out";
-      
-      // Hide notification after 3 seconds
-      setTimeout(() => {
-        notification.className = "fixed top-4 right-4 bg-red-500 text-white py-2 px-4 rounded-md shadow-lg transform transition-transform duration-500 ease-in-out translate-y-[-100px]";
-      }, 3000);
+      setError
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -122,6 +101,24 @@ function TuitionRequestPage() {
   ];
 
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  if (isLoading) {
+    return (
+      <div>
+        <StudentDashboardHeader/>
+        <LoadingSpinner/>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <StudentDashboardHeader/>
+        <ErrorMessage message={error}/>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -265,12 +262,12 @@ function TuitionRequestPage() {
           <div className="p-6 flex justify-center">
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isLoading}
               className={`px-8 py-3 rounded-md text-white font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                isSubmitting ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                isLoading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
               }`}
             >
-              {isSubmitting ? "Submitting Request..." : "Submit Tuition Request"}
+              {isLoading ? "Submitting Request..." : "Submit Tuition Request"}
             </button>
           </div>
         </form>
