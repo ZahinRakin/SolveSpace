@@ -21,7 +21,6 @@ function StudentPosts() {
 
   useEffect(() => {
     getUser(setUser);
-    console.log("studentposts: user: ", user); //debugging log
     fetchPosts();
   }, []);
 
@@ -172,10 +171,10 @@ function StudentPosts() {
               deletePost={deletePost}
               show_accept_teacher={doesOwnPost(post.owner_id._id)}
               acceptTeacher={acceptTeacher}
-              show_join_button={!doesOwnPost(post.owner_id._id) && !isInPost(post.interested_students)}
-              handleJoin={(post_id)=>handleJoin(post._id, setIsLoading, setError, fetchPosts)}
+              show_join_button={false}//!doesOwnPost(post.owner_id._id) && !isInPost(post.interested_students)
+              handleJoin={null}//(post_id)=>handleJoin(post._id, user.role, setIsLoading, setError, fetchPosts)
               show_leave_button={!doesOwnPost(post.owner_id._id) && isInPost(post.interested_students)}
-              handleLeave={(post_id)=>handleLeave(post._id, setIsLoading, setError, fetchPosts)}
+              handleLeave={(post_id)=>handleLeave(post._id, user.role, setIsLoading, setError, fetchPosts)}
             />
           ))}
         </div>

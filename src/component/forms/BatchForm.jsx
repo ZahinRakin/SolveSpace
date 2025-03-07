@@ -72,43 +72,26 @@ function BatchForm({ formData, setFormData, handleSubmit }) {
       <form onSubmit={handleSubmit}>
         {/* Owner ID */}
         <div className="mb-4">
-          <label htmlFor="owner_id" className="block text-sm font-medium text-gray-700">Owner ID</label>
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700">Owner username</label>
           <input
             type="text"
-            id="owner_id"
-            name="owner_id"
-            value={formData.owner_id}
+            id="username"
+            name="username"
+            value={formData.username}
             onChange={handleChange}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
-        {/* Owner Type */}
-        <div className="mb-4">
-          <label htmlFor="owner" className="block text-sm font-medium text-gray-700">Owner Type</label>
-          <select
-            id="owner"
-            name="owner"
-            value={formData.owner}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="">Select owner type</option>
-            <option value="teacher">Teacher</option>
-            <option value="student">Student</option>
-          </select>
-        </div>
-
         {/* Teacher ID */}
         <div className="mb-4">
-          <label htmlFor="owner_id" className="block text-sm font-medium text-gray-700">Teacher ID</label>
+          <label htmlFor="teacher_username" className="block text-sm font-medium text-gray-700">Teacher username</label>
           <input
             type="text"
-            id="teacher_id"
-            name="teacher_id"
-            value={formData.teacher_id}
+            id="teacher_username"
+            name="teacher_username"
+            value={formData.teacher_username}
             onChange={handleChange}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"

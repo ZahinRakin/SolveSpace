@@ -7,6 +7,7 @@ import LoadingSpinner from "../../component/LoadingSpinner.jsx";
 import fetchData from "../../utils/fetchData.js";
 import BatchCard from "../../component/cards/BatchCard.jsx";
 import getUser from "../../utils/getUser.js";
+import BatchForm from "../../component/forms/BatchForm.jsx";
 
 function StudentBatches() {
   const [ownBatches, setOwnBatches] = useState([]);
@@ -14,6 +15,25 @@ function StudentBatches() {
   const [editableBatch, setEditableBatch] = useState(null);
   const [showStudents, setShowStudents] = useState(null);
   const [user, setUser] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "", 
+    teacher_username: "", 
+
+    subject: "",
+
+    class: "",
+    
+    weekly_schedule: [],
+    time: "10:00 AM",
+    salary: 0,
+    time_to_pay: false,
+
+    is_continuous: false,
+    is_batch: false,
+    student_ids:[]
+  });
   // const [studentsData, setStudentsData] = useState({});
   
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +46,28 @@ function StudentBatches() {
     getUser(setUser);
     fetchBatches();
   }, []); 
+
+  const addBatch = async (formData) => {
+    try {
+      const response = await axios.post("/api/v1/batch/create", formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        }
+      });
+      if (response.status >= 200 && response.status <=300) {
+        setShowForm(false);
+        alert('User added successfully');
+        await fetchBatches();
+      }
+    } catch (error) {
+      setError("Failed to add user. Please try again.");
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addBatch(formData);
+  };
 
   async function fetchBatches () {
     const path = "/api/v1/batch/batches";
@@ -66,7 +108,7 @@ function StudentBatches() {
     try {
       setIsLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      await axios.delete(`/api/v1/batch/delete/${id}`, {
+      await axios.delete(`/api/v1/batch/destroy/${id}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -116,36 +158,41 @@ function StudentBatches() {
     }
   }
 
-  const handleShowStudents = (students) => {
-    if (showInterestedStudents === students) {
-      setShowStudents(null);
-    } else {
-      setShowStudents(students);
-    }
-  };
-
   async function handlePay(batch){
+    // const { totalAmount, productName, batchId, teacherId } = req.body;
     setIsLoading(true);
     const path = "/api/v1/payment/pay";
     const paymentData = {
-      totalAmount: batch.salary,
+      totalAmount: batch?.salary || 5000,
       productName: `${batch.teacher_id.username}'s ${batch.subject} tuition.`,
+      batchId: batch._id,
       teacherId: batch.teacher_id._id
     }
 
     try {
-      const payData = await axios.post(path, paymentData, {
+      const response = await axios.post(path, paymentData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
       });
-      console.log("payment details: ", payData);
+
+      window.open(response.data.redirectUrl, "_blank");
+
+      console.log("payment details: ", response);
     } catch (error) {
       console.error("error while paying: ", error);
       setError(`Failed to pay: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function joinClass(join_class_link) {
+    if (!join_class_link) {
+      alert("No class link available.");
+      return;
+    }
+    window.open(join_class_link, "_blank");
   }
 
   if (isLoading) {
@@ -169,11 +216,38 @@ function StudentBatches() {
   return (
     <div className="min-h-screen bg-gray-50">
       <StudentDashboardHeader/>
+      {/*Modal for batch form */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl h-full max-h-[80vh] overflow-auto transform transition-all">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-900">Add New Batch</h3>
+              <button 
+                onClick={() => setShowForm(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <BatchForm
+                formData={formData} 
+                setFormData={setFormData} 
+                passwordVisible={passwordVisible} 
+                setPasswordVisible={setPasswordVisible} 
+                handleSubmit={handleSubmit} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Your Batches</h1>
           <button
-            onClick={() => navigate('/create-batch')}
+            onClick={() => setShowForm(true)}
             className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -192,7 +266,7 @@ function StudentBatches() {
             <p className="mt-1 text-sm text-gray-500">Get started by creating a new batch.</p>
             <div className="mt-6">
               <button
-                onClick={() => navigate('/create-batch')}
+                onClick={() => setShowForm(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 Create a batch
@@ -206,12 +280,27 @@ function StudentBatches() {
             <BatchCard
               key={batch._id}
               batch={batch}
-              is_editable={true}
-              setEditablePost={setEditableBatch}
-              deleteBatch={deleteBatch}
-              handleShowStudents={handleShowStudents}
-              show_pay={batch.time_to_pay}
+
+              show_edit_button={true}
+              handleEdit={setEditableBatch}
+
+              show_delete_button={true}
+              handleDelete={deleteBatch}
+
+              show_ask_button={false}
+              handleAsk={null}
+
+              show_pay_button={batch.time_to_pay}
               handlePay={handlePay}
+
+              start_class_button={false} 
+              startClass={null}
+
+              join_class_button={batch.join_class_link} //batch.join_class_link
+              joinClass={joinClass}
+
+              delete_student_button={false}
+              handleDeleteStudent={null}
             />
           ))}
         </div>
@@ -224,12 +313,27 @@ function StudentBatches() {
                 <BatchCard
                   key={batch._id}
                   batch={batch}
-                  is_editable={false}
-                  setEditablePost={null}
-                  deleteBatch={deleteBatch}
-                  handleShowStudents={handleShowStudents}
-                  show_pay={batch.time_to_pay}
+
+                  show_edit_button={false}
+                  handleEdit={null}
+
+                  show_delete_button={false}
+                  handleDelete={null}
+
+                  show_ask_button={false}
+                  handleAsk={null}
+
+                  show_pay_button={batch.time_to_pay}
                   handlePay={handlePay}
+
+                  start_class_button={false} 
+                  startClass={null}
+
+                  join_class_button={batch.join_class_link} //batch.join_class_link
+                  joinClass={joinClass}
+
+                  delete_student_button={false}
+                  handleDeleteStudent={null}
                 />
               ))}
             </div>

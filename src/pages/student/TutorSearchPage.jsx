@@ -110,8 +110,8 @@ function TutorSearchPage() {
       weekly_schedule: [],
       time: "",
       salary: "",
-      is_continuous: false,
-      is_batch: false,
+      is_continuous: null,
+      is_batch: null,
       max_size: "",
     });
   };
@@ -331,7 +331,7 @@ function TutorSearchPage() {
                           </div>
                           <div>
                             <span className="text-xs text-gray-500 block">Salary</span>
-                            <span className="font-medium">{req.salary ? `${req.salary} BDT` : "Not specified"}</span>
+                            <span className="font-medium">{req.salary ? `${req.salary} BDT` : "3000"}</span>
                           </div>
                           <div>
                             <span className="text-xs text-gray-500 block">Schedule</span>
@@ -357,14 +357,14 @@ function TutorSearchPage() {
                         <div className="flex justify-end">
                           {showJoinButton(req) ?
                             (<button 
-                              onClick={() => handleJoin(req._id, setIsLoading, setError, () => {fetchTeacherPosts(path, formData)})} 
+                              onClick={() => handleJoin(req._id, user.role, setIsLoading, setError, () => {fetchTeacherPosts(path, formData)})} 
                               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm transition duration-200"
                             >
                               Join
                             </button>)
                           : 
                             (<button 
-                              onClick={() => handleLeave(req._id, setIsLoading, setError, () => {fetchTeacherPosts(path, formData)})} 
+                              onClick={() => handleLeave(req._id, user.role, setIsLoading, setError, () => {fetchTeacherPosts(path, formData)})} 
                               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition duration-200"
                             >
                               Leave

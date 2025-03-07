@@ -16,9 +16,8 @@ function BatchManagement() {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    owner_id: "", 
-    owner: "", 
-    teacher_id: "", 
+    username: "", 
+    teacher_username: "", 
 
     subject: "",
 

@@ -28,6 +28,8 @@ import ReportManagement from "./pages/admin/ReportManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import PostManagement from "./pages/admin/PostManagement";
 import BatchManagement from "./pages/admin/BatchManagement";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentFailurePage from "./pages/PaymentFailurePage";
 
 const router = createBrowserRouter([
   {
@@ -108,6 +110,12 @@ const router = createBrowserRouter([
   },{
     path: "/editprofile",
     element: <EditProfilePage/>
+  },{
+    path: "/payment/success",           //payment
+    element: <PaymentSuccessPage/>
+  },{
+    path: "/payment/failure",
+    element: <PaymentFailurePage/>
   }
 ]);
 
