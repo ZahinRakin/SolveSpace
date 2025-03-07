@@ -112,14 +112,27 @@ const deletePost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Post deleted successfully"));
 });
 
-const getYourPosts = asyncHandler(async(req, res) => {
-  const { _id: user_id, role } = req.user;
-  const userPosts = await Post.find({owner_id: user_id, owner: role});
-  res
-    .status(200)
-    .json(new ApiResponse(200, userPosts, "success"));
-});
+const getYourPosts = asyncHandler(async (req, res) => {
+  try {
+    const { _id: user_id, role } = req.user;
 
+    const userPosts = await Post.find({
+      $or: [
+        { owner_id: user_id },
+        { interested_students: { $in: [user_id] } },
+        { interested_teachers: { $in: [user_id] } }
+      ]
+    })
+    .populate("owner_id", "username")
+    .populate("interested_teachers", "username")
+    .populate("interested_students", "username")
+    .lean();
+
+    res.status(200).json(new ApiResponse(200, userPosts, "success"));
+  } catch (error) {
+    res.status(500).json(new ApiResponse(500, null, "Error fetching posts"));
+  }
+});
 
 async function postToBatch(post, teacher_id) {
   const student_ids = post.interested_students;

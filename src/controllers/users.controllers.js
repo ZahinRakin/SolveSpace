@@ -16,9 +16,6 @@ const viewProfile = asyncHandler(async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    console.log("Fetched the data: ", user);
-
     res
       .status(200)
       .json(new ApiResponse(200, user, "success"));
@@ -26,7 +23,7 @@ const viewProfile = asyncHandler(async (req, res) => {
     console.error("Error fetching user:", error);
     res
       .status(500)
-      .json(new ApiError(500, error.message, error.errors, error.stack));
+      .json(new ApiResponse(error.statusCode, null, error.message));
   }
 });
 
@@ -74,7 +71,6 @@ const deleteAccount = asyncHandler(async (req, res) => {
 });
 
 const getUser = asyncHandler(async (req, res) => {
-  console.log("at least this has been touched.");
   const {id: user_id} = req.params;
   const user = await User.findById(user_id);
   res.status(200).json(new ApiResponse(200, user, "success"));

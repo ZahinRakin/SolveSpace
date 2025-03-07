@@ -38,10 +38,20 @@ async function recommendedCourses(studentId) {
     const teacherIds = topTeachers.map(t => t._id);
 
     // Fetch recommended courses: priority to teachers + relevant subjects
-    const recommendedCourses = await Post.find({
-      owner_id: { $in: teacherIds },
-      _id: { $nin: prevCourseIds } // Exclude courses student already took
-    }).populate("owner_id", "firstname lastname");
+    // const recommendedCourses = await Post.find({
+    //   owner_id: { $in: teacherIds },
+    //   _id: { $nin: prevCourseIds } // Exclude courses student already took
+    // })
+    // .populate("owner_id", "username")
+    // .populate("interested_teachers", "username")
+    // .populate("interested_students", "username")
+    // .lean();
+    const recommendedCourses = await Post
+      .find({})
+      .populate("owner_id", "username")
+      .populate("interested_teachers", "username")
+      .populate("interested_students", "username")
+      .lean();
 
     return recommendedCourses;
   } catch (error) {
@@ -131,6 +141,8 @@ const acceptTeacher = asyncHandler(async (req, res) => {
     user: { _id: student_id, role }
   } = req;
 
+  console.log("inside accept teacher"); //debugging log. control reached here.
+
   const post = await Post.findById(post_id);
   if (!post) {
     return res.status(404).json(new ApiResponse(404, null, "Post not found"));
@@ -149,10 +161,6 @@ const acceptTeacher = asyncHandler(async (req, res) => {
     return res.status(400).json(new ApiResponse(400, null, "This teacher hasn't expressed interest in this post"));
   }
 
-  if (post.interested_students.includes(student_id)) {
-    return res.status(409).json(new ApiResponse(409, null, "You have already accepted this teacher for the post"));
-  }
-
   post.interested_students.push(student_id);
 
   const batch = await postToBatch(post, teacher_id);
@@ -165,34 +173,43 @@ const acceptTeacher = asyncHandler(async (req, res) => {
 
 const searchTeacher = asyncHandler(async (req, res) => {
   const {
-    // user: { _id: student_id , role },
-    body: filter
+    query: filter
   } = req;
 
-  filter.owner = "teacher";
-
-  const allowedFilters = ["owner" ,"subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
+  const allowedFilters = ["subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
   const sanitizedFilter = Object.keys(filter)
-    .filter(key => allowedFilters.includes(key))
+    .filter(key => allowedFilters.includes(key) && filter[key])
     .reduce((obj, key) => {
       obj[key] = filter[key];
       return obj;
     }, {});
+  
+  sanitizedFilter.owner = "teacher";
+  if(filter.is_continuous){
+    sanitizedFilter.is_continuous = sanitizedFilter.is_continuous === "true";
+  }
+  if(filter.is_batch){
+    sanitizedFilter.is_batch = sanitizedFilter.is_batch === "true";
+  }
+  if(filter.salary){
+    sanitizedFilter.salary = Number(sanitizedFilter.salary);
+  }
+  if(filter.max_size){
+    sanitizedFilter.max_size = Number(sanitizedFilter.max_size) || 0;
+  }
 
   const matched_posts = await Post
     .find(sanitizedFilter)
-    .select("-owner_id -owner -interested_teachers -interested_students");;
-
-  if (!matched_posts || matched_posts.length === 0) {
-    return res
-      .status(404)
-      .json(new ApiResponse(404, null, "No posts found"));
-  }
+    .populate("owner_id", "username role")
+    .populate("interested_students", "username")
+    .populate("interested_teachers", "username")
+    .lean();
 
   res
     .status(200)
     .json(new ApiResponse(200, matched_posts, "Success"));
 });
+
 const leaveBatch = asyncHandler(async (req, res) => {
   const {
     params: { id: batch_id },

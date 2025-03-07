@@ -40,7 +40,6 @@ const createBatch = asyncHandler(async (req, res) => {
   }
 });
 
-
 const addUserToBatch = asyncHandler(async (req, res) => {
   const {
     params: { batch_id, user_id },
@@ -167,26 +166,24 @@ const getYourBatches = asyncHandler(async (req, res) => {
   try {
     const { _id: user_id } = req.user;
 
-    const yourBatches = await Batch.find({ owner_id: user_id});
+    const batches = await Batch
+      .find({
+        $or: [
+          { owner_id: user_id }, // Batches where the user is the owner
+          { 
+            $and: [
+              { $or: [{ teacher_id: user_id }, { student_ids: user_id }] }, // Batches where the user is a teacher or student
+              { owner_id: { $ne: user_id } } // Ensure that the user is not the owner
+            ]
+          }
+        ]
+      })
+      .populate("owner_id", "username")
+      .populate("student_ids", "username")
+      .populate("teacher_id", "username")
+      .lean();
 
-    const batchesYouBelong = await Batch.find({
-      $and: [
-        {
-          $or: [
-            { teacher_id: user_id }, 
-            { student_ids: user_id }
-          ]
-        },
-        { owner_id: { $ne: user_id } }
-      ]
-    });
-
-    const data = {
-      own: yourBatches,
-      partOf: batchesYouBelong,
-    };
-
-    res.status(200).json(new ApiResponse(200, data, "success"));
+    res.status(200).json(new ApiResponse(200, batches, "success"));
   } catch (error) {
     res.status(500).json(new ApiResponse(500, null, "Server Error"));
   }

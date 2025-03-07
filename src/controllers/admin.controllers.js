@@ -100,6 +100,7 @@ const addUser = asyncHandler(async (req, res) => {
 });
 
 const removeUser = asyncHandler(async (req, res) => {
+  console.log("inside admin remove user"); //debugging log..
   const { id } = req.params;
   const { role } = req.user;
 
@@ -109,7 +110,7 @@ const removeUser = asyncHandler(async (req, res) => {
       .json(new ApiResponse(403, null, "Unauthorized to remove users."));
   }
 
-  clearUserData(id, res);
+  await clearUserData(id, res);
 });
 
 const viewAllStudent = asyncHandler(async (req, res) => {

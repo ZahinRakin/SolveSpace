@@ -5,6 +5,7 @@ import Payment from '../models/payment.models.js';
 import User from '../models/users.models.js';
 import Batch from '../models/batch.models.js';
 import { ApiError } from '../utils/ApiError.js';
+import Teacher from '../models/teacher.models.js';
 
 // need: verifyJWT, totalAmount, productName, batchId, teacherId method: post
 const sslczPay = asyncHandler(async (req, res) => { 
@@ -27,7 +28,10 @@ const sslczPay = asyncHandler(async (req, res) => {
   }
 
   // Fetch teacher's SSLCommerz credentials
-  const teacher = await User.findById(teacherId).select("sslczStoreId sslczStorePassword");
+  const teacher = await Teacher
+    .find({user_id: teacherId})
+    .select("sslczStoreId sslczStorePassword")
+    .lean();
 
   if (!teacher || !teacher.sslczStoreId || !teacher.sslczStorePassword) {
     return res.status(400).json(new ApiError(400, "Teacher's SSLCommerz credentials are missing"));
