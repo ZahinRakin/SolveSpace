@@ -51,7 +51,7 @@ const teacherDashboard = asyncHandler(async (req, res) => {
 
 const showInterest = asyncHandler(async (req, res) => {
   const {
-    params: { id: post_id }, // Fixed 'is' to 'id'
+    params: { id: post_id },
     user: { _id: teacher_id, role }
   } = req;
 
@@ -75,6 +75,8 @@ const showInterest = asyncHandler(async (req, res) => {
   }
 
   post.interested_teachers.push(teacher_id);
+
+  console.log("iside show interest: ", post.interested_teachers);// debugging log.
   await post.save();
 
   res.status(200).json(new ApiResponse(200, null, "Interest registered successfully"));
@@ -107,26 +109,38 @@ const cancelInterest = asyncHandler(async (req, res) => {
 });
 
 const searchStudent = asyncHandler(async (req, res) => {
-  const filter = req.query;
-  filter.owner = "student";
-  
-  const allowedFilters = ["owner" ,"subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
+  const {
+    query: filter
+  } = req;
+
+  const allowedFilters = ["subject", "class", "title", "subtitle", "description", "weekly_schedule", "time", "salary", "is_continuous", "is_batch", "max_size"];
   const sanitizedFilter = Object.keys(filter)
-    .filter(key => allowedFilters.includes(key)&&filter[key])
+    .filter(key => allowedFilters.includes(key) && filter[key])
     .reduce((obj, key) => {
       obj[key] = filter[key];
       return obj;
     }, {});
+  
+  sanitizedFilter.owner = "student";
+  if(filter.is_continuous){
+    sanitizedFilter.is_continuous = sanitizedFilter.is_continuous === "true";
+  }
+  if(filter.is_batch){
+    sanitizedFilter.is_batch = sanitizedFilter.is_batch === "true";
+  }
+  if(filter.salary){
+    sanitizedFilter.salary = Number(sanitizedFilter.salary);
+  }
+  if(filter.max_size){
+    sanitizedFilter.max_size = Number(sanitizedFilter.max_size) || 0;
+  }
 
   const matched_posts = await Post
     .find(sanitizedFilter)
-    .select("-owner_id -owner -interested_teachers -interested_students");
-  
-  if (!matched_posts || matched_posts.length === 0) {
-    return res
-      .status(404)
-      .json(new ApiError(404, "No posts found"));
-  }
+    .populate("owner_id", "username role")
+    .populate("interested_students", "username")
+    .populate("interested_teachers", "username")
+    .lean();
 
   res
     .status(200)

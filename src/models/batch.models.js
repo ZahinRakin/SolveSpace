@@ -49,6 +49,11 @@ const batchSchema = new Schema({
     default: false
   },
 
+  join_class_link: {
+    type: String,
+    default: null
+  },
+
 
   is_continuous: {
     type: Boolean,

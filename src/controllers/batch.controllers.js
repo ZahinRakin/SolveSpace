@@ -6,37 +6,76 @@ import { updateAdminStats } from "./admin.controllers.js";
 
 import { systemNotification, sendNotification } from "./notification.controllers.js";
 import { sendEmail } from "./emailService.controllers.js";
+import Payment from "../models/payment.models.js";
 
-const createBatch = asyncHandler(async (req, res) => {
-  const {
-    user: { _id: owner_id, role: owner },
-    body: batchInfo
-  } = req;
+const createBatch = asyncHandler(async (req, res) => {  
+  const batchInfo = req.body;
+  
+  if (Object.keys(batchInfo).length === 0) {
+    return res
+    .status(400) // Bad Request
+    .json(new ApiResponse(400, null, "No data provided."));
+  }
 
-  batchInfo.owner_id = owner_id;
-  batchInfo.owner = owner;
+  const batch_owner = await User
+    .findOne({username: batchInfo.username})
+    .select("_id role")
+    .lean();
 
-  const batchFilter = [
-    "owner_id", "owner", "teacher_id", "subject", "class", 
-    "weekly_schedule", "time", "salary", "is_continuous", 
-    "is_batch", "student_ids"
+  
+  if (!batch_owner) {
+    return res
+      .status(404) // Not Found
+      .json(new ApiResponse(404, null, "Owner ID doesn't exist."));
+  }
+
+  const teacher = await User
+    .findOne({username: batchInfo.teacher_username})
+    .select("_id")
+    .lean();
+  if (!teacher) {
+    return res.status(404).json(new ApiResponse(404, null, "Teacher not found."));
+  }
+
+  const student_usernames = batchInfo.student_ids;
+
+  let student_ids = await Promise.all(
+    student_usernames.map(async (username) => {
+      const user = await User.findOne({ username }).select("_id");
+      return user ? user._id : null; // Handle user not found
+    })
+  );
+  student_ids = student_ids.filter(id => id); //removing null values
+
+
+  const allowedInfo = [
+    "subject", "class", "weekly_schedule", "time", "salary", "time_to_pay", "is_continuous", "is_batch"
   ];
 
-  const sanitizedBatchInfo = Object.keys(batchInfo)
-    .filter(key => batchFilter.includes(key))
+  const sanitizedInfo = Object.keys(batchInfo)
+    .filter((key) => allowedInfo.includes(key))
     .reduce((obj, key) => {
       obj[key] = batchInfo[key];
       return obj;
     }, {});
 
+  sanitizedInfo.student_ids = student_ids;
+  sanitizedInfo.owner_id = batch_owner._id;
+  sanitizedInfo.owner = batch_owner.role;
+  sanitizedInfo.teacher_id = teacher._id;
+
+  console.log("inside teacher add batch: ", sanitizedInfo);
+
   try {
-    const batch = await Batch.create(sanitizedBatchInfo);
-
-    await updateAdminStats(0, 1);
-
-    res.status(201).json(new ApiResponse(201, batch, "Batch created successfully"));
+    const batch = await Batch.create(sanitizedInfo);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, batch, "Batch has been created."));
   } catch (error) {
-    res.status(400).json(new ApiResponse(400, null, error.message || "Failed to create batch"));
+    console.log(error.message);
+    return res
+      .status(500) // Internal Server Error
+      .json(new ApiResponse(500, null, error.message || "An error occurred while creating the batch."));
   }
 });
 
@@ -105,7 +144,7 @@ const destroyBatch = asyncHandler(async (req, res) => {
     user: { _id: owner_id, role }
   } = req;
 
-  const batch = await Batch.findById(batch_id).select("owner_id student_ids");
+  const batch = await Batch.findById(batch_id);
   if (!batch) {
     return res.status(404).json(new ApiResponse(404, null, "Batch not found"));
   }
@@ -190,11 +229,15 @@ const getYourBatches = asyncHandler(async (req, res) => {
 });
 
 const askForPayment = asyncHandler(async (req, res) => {
+  console.log("inside ask for payment"); //debugging log.
   const { _id: teacher_id } = req.body;
   const { id: batch_id } = req.params;
 
+  console.log("batch_id:", batch_id); //debugging log.
   const batch = await Batch.findById(batch_id);
+  console.log("batch: ", batch); //debugging log.
   if (!batch) {
+    console.log("inside not foudn batch"); //debugging
     return res.status(404).json(new ApiResponse(404, null, "Batch not found"));
   }
 
@@ -216,6 +259,8 @@ const askForPayment = asyncHandler(async (req, res) => {
 
   // Execute all updates in parallel
   await Promise.all(updatePromises);
+
+  console.log("inside ask for payment: success time_to_pay: ", batch.time_to_pay); //debugging log.
 
   res.status(200).json(new ApiResponse(200, batch, "Successfully asked for payment."));
 });

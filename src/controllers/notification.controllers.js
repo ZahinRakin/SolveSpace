@@ -36,14 +36,16 @@ const getNotifications = asyncHandler(async (req, res) => {
 //     .json(new ApiResponse(201, "notification sent successfully", "success"));
 // });
 async function sendNotification(recieverID, senderID, message){
+
+  console.log(`inside notification controller: reciever id: ${recieverID}  senderId: ${senderID}`);//debugging log
   try {
     const notification = await Notification.create({
-      recieverID,
-      senderID,
+      recieverId: recieverID,
+      senderId: senderID,
       message
     });
   } catch (error) {
-    throw new ApiError(error.statusCode, error.message);
+    console.log("sendNotification error: ", error.message);
   }
 }
 

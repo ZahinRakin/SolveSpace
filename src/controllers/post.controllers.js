@@ -97,7 +97,7 @@ const deletePost = asyncHandler(async (req, res) => {
     return res.status(404).json(new ApiResponse(404, null, "Post not found"));
   }
 
-  if (!post.owner_id.equals(user_id) || post.owner !== role) {
+  if (!post.owner_id.equals(user_id) && post.owner !== role) {
     return res
       .status(403)
       .json(new ApiError(403, "You don't have permission to delete this post"));

@@ -6,13 +6,15 @@ import User from '../models/users.models.js';
 import Batch from '../models/batch.models.js';
 import { ApiError } from '../utils/ApiError.js';
 import Teacher from '../models/teacher.models.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+import { sendEmail } from './emailService.controllers.js';
 
 // need: verifyJWT, totalAmount, productName, batchId, teacherId method: post
 const sslczPay = asyncHandler(async (req, res) => { 
   const { totalAmount, productName, batchId, teacherId } = req.body;
-  // console.log(`total amount: ${totalAmount} -- productname: ${productName} -- batchId: ${batchId} -- teacherid: ${teacherId}`); //debug === reached
+  console.log(`total amount: ${totalAmount} -- productname: ${productName} -- batchId: ${batchId} -- teacherid: ${teacherId}`); //debug === reached
   const studentId = req.user._id;
-  // console.log(`user: ${studentId}`); //debug === reached
+  console.log(`user: ${studentId}`); //debug === reached
 
   // Checking if student is part of the batch
   const batch = await Batch.findById(batchId).select("student_ids");
@@ -20,21 +22,23 @@ const sslczPay = asyncHandler(async (req, res) => {
   console.log(`batch: ${batch}`); //debug
 
   if (!batch) {
-    return res.status(404).json(new ApiError(404, "Batch not found"));
+    return res.status(404).json(new ApiResponse(404, "Batch nowhere", "Batch not found"));
   }
 
   if (!batch.student_ids.includes(studentId)) {
-    return res.status(400).json(new ApiError(400, "You are not part of the batch"));
+    return res.status(400).json(new ApiResponse(400, "You are alien", "You are not part of the batch"));
   }
 
   // Fetch teacher's SSLCommerz credentials
   const teacher = await Teacher
-    .find({user_id: teacherId})
-    .select("sslczStoreId sslczStorePassword")
+    .findOne({user_id: teacherId})
+    .select("sslcz_store_id sslcz_store_password")
     .lean();
+  
+  console.log("teacher: ", teacher); //debugging log.
 
-  if (!teacher || !teacher.sslczStoreId || !teacher.sslczStorePassword) {
-    return res.status(400).json(new ApiError(400, "Teacher's SSLCommerz credentials are missing"));
+  if (!teacher || !teacher.sslcz_store_id || !teacher.sslcz_store_password) {
+    return res.status(400).json(new ApiResponse(400,"SSL problem", "Teacher's SSLCommerz credentials are missing"));
   }
 
   const cus_name = `${req.user.firstname} ${req.user.lastname}`;
@@ -59,8 +63,8 @@ const sslczPay = asyncHandler(async (req, res) => {
 
   try {
     const sslcz = new SSLCommerzPayment(
-      teacher.sslczStoreId, 
-      teacher.sslczStorePassword, 
+      teacher.sslcz_store_id, 
+      teacher.sslcz_store_password, 
       process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === "true"
     );
 
@@ -78,7 +82,7 @@ const sslczPay = asyncHandler(async (req, res) => {
 
     if (apiResponse && apiResponse.GatewayPageURL) {
       console.log("Redirecting to:", apiResponse.GatewayPageURL);
-      return res.redirect(apiResponse.GatewayPageURL);
+      return res.json({redirectUrl: apiResponse.GatewayPageURL});
     } else {
       throw new Error("Failed to initiate SSLCommerz payment session");
     }
@@ -90,24 +94,32 @@ const sslczPay = asyncHandler(async (req, res) => {
 
 
 const sslczSuccess = asyncHandler(async (req, res) => {
+  console.log("inside success"); //debugging log
   const { val_id, amount, status, tran_id, card_type } = req.body;
-  const payment = await Payment.findOne({ trnx_id: tran_id }).select("teacher_id");
+
+  console.log(`val id: ${val_id} amount: ${amount} status: ${status} trnxid: ${tran_id} card type: ${card_type}`); //debugging log.
+  const payment = await Payment.findOne({ trnx_id: tran_id })
+    .select("teacher_id")
+    .populate("student_id", "email username");
   if (!payment) {
     throw new Error("Payment record not found");
   }
 
-  const { sslczStoreId, sslczStorePassword } = await User.findById(payment.teacher_id)
-    .select("sslczStoreId sslczStorePassword")
-    .lean(); // Optional: `lean()` improves performance for read-only queries.
+  const { sslcz_store_id, sslcz_store_password } = await Teacher.findOne({user_id: payment.teacher_id})
+    .select("sslcz_store_id sslcz_store_password")
+    .lean();
+  console.log(`sslcz store id: ${sslcz_store_id}  sslcz store password: ${sslcz_store_password}`); //debugging log.
 
   try {
     const sslcz = new SSLCommerzPayment(
-      sslczStoreId,
-      sslczStorePassword,
+      sslcz_store_id,
+      sslcz_store_password,
       process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === "true"
     );
 
     const validationData = await sslcz.validate({ val_id });
+
+    console.log(`validation data: ${validationData}`); //debugging log.
 
     if (validationData.status === "VALID" && validationData.amount == amount) {
       console.log("Payment validated successfully:", validationData);
@@ -127,8 +139,8 @@ const sslczSuccess = asyncHandler(async (req, res) => {
       if (!payment) {
         return res.status(404).json({ status: "error", message: "Payment record not found" });
       }
-
-      return res.status(200).json({ status: "success", data: payment });
+      return res
+        .redirect("http://localhost:5173/payment/success");
     } else {
       return res.status(400).json({ status: "failed", message: "Payment validation failed" });
     }
@@ -140,6 +152,7 @@ const sslczSuccess = asyncHandler(async (req, res) => {
 
 
 const sslczFailure = asyncHandler(async (req, res) => {
+  console.log("inside failure"); //debugging log
   const { tran_id, status, error, amount, currency, fail_reason } = req.body;
 
   console.error("Payment Failed:", {
@@ -152,13 +165,12 @@ const sslczFailure = asyncHandler(async (req, res) => {
   });
 
   try {
-    // ✅ Update payment in the database
     const payment = await Payment.findOneAndUpdate(
       { trnx_id: tran_id },
       {
         payment_status: status || "FAILED",
         fail_reason: fail_reason || error || "Unknown reason",
-        gateaway_response: req.body, // Store full response for debugging
+        gateaway_response: req.body,
       },
       { new: true }
     );
@@ -187,18 +199,18 @@ const sslczFailure = asyncHandler(async (req, res) => {
 
 
 const sslczCancel = asyncHandler(async (req, res) => {
+  console.log("inside cancel"); //debugging log
   const { tran_id, status, error, amount, currency, cancel_reason } = req.body;
 
   console.log("Canceled transaction data: ", req.body);
 
   try {
-    // ✅ Update the payment record to reflect the cancellation
     const payment = await Payment.findOneAndUpdate(
       { trnx_id: tran_id },
       {
-        payment_status: "CANCELED", // Mark status as 'CANCELED'
-        fail_reason: cancel_reason || error || "User canceled the payment", // Store cancel reason if available
-        gateaway_response: req.body, // Save the full response for debugging purposes
+        payment_status: "CANCELED",
+        fail_reason: cancel_reason || error || "User canceled the payment",
+        gateaway_response: req.body, 
       },
       { new: true }
     );
@@ -206,7 +218,6 @@ const sslczCancel = asyncHandler(async (req, res) => {
     if (!payment) {
       return res.status(404).json({ status: "error", message: "Payment record not found" });
     }
-
     return res.status(200).json({
       status: "canceled",
       message: "Payment was canceled by the user",
@@ -227,6 +238,7 @@ const sslczCancel = asyncHandler(async (req, res) => {
 
 
 const sslczIPN = asyncHandler(async (req, res) => {
+    console.log("inside ipn"); //debugging log
   const { val_id, amount, status, tran_id, currency } = req.body;
 
   const payment = await Payment.findOne({ trnx_id: tran_id }).select("teacher_id");
@@ -234,35 +246,31 @@ const sslczIPN = asyncHandler(async (req, res) => {
     throw new Error("Payment record not found");
   }
 
-  const { sslczStoreId, sslczStorePassword } = await User.findById(payment.teacher_id)
-    .select("sslczStoreId sslczStorePassword")
-    .lean(); // Optional: `lean()` improves performance for read-only queries.
+  const { sslcz_store_id, sslcz_store_password } = await Teacher.findOne({user_id: payment.teacher_id})
+    .select("sslcz_store_id sslcz_store_password")
+    .lean();
     
   const sslcz = new SSLCommerzPayment(
-    sslczStoreId,
-    sslczStorePassword,
+    sslcz_store_id,
+    sslcz_store_password,
     process.env.SSLCOMMERZ_IS_LIVE?.toLowerCase() === "true"
   );
 
   try {
-    // Step 1: Validate the payment with SSLCommerz using val_id
     const validationData = await sslcz.validate({ val_id });
 
     if (validationData.status === "VALID" && validationData.amount === amount) {
       console.log("IPN Payment validated successfully:", validationData);
 
-      // Step 2: Only update the database after successful validation
       const payment = await Payment.findOne({ trnx_id: tran_id });
 
       if (payment) {
-        // If payment exists, update it to mark as successful
         payment.payment_status = "SUCCESS";
         payment.val_id = val_id;
         payment.gateaway_response = req.body;
 
         await payment.save();
       } else {
-        // If payment record doesn't exist, create a new record (optional)
         await Payment.create({
           trnx_id: tran_id,
           amount,
@@ -272,12 +280,8 @@ const sslczIPN = asyncHandler(async (req, res) => {
           gateaway_response: req.body,
         });
       }
-
-      return res.status(200).json({
-        status: "success",
-        message: "Payment validated successfully through IPN",
-        data: validationData,
-      });
+      return res
+        .redirect("http://localhost:5173/payment/success");
     } else {
       console.log("IPN Payment validation failed:", validationData);
       return res.status(400).json({
@@ -296,6 +300,21 @@ const sslczIPN = asyncHandler(async (req, res) => {
   }
 });
 
+const getLatestPayment = asyncHandler(async (req, res) => {
+  console.log("get last payment has been hit: "); //debugging log.
+  const user_id = req.user._id;
+  const lastPayment = await Payment.findOne({ student_id: user_id }).sort({ createdAt: -1 });
+  console.log("last payment: ", lastPayment); //debugging log.
+  if(!lastPayment){
+    return res
+      .status(300)
+      .json(new ApiResponse(200, lastPayment, "no payments yet"));
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, lastPayment, "success"));
+});
+
 
 
 export { 
@@ -303,5 +322,6 @@ export {
   sslczSuccess, 
   sslczFailure, 
   sslczCancel, 
-  sslczIPN 
+  sslczIPN,
+  getLatestPayment
 };

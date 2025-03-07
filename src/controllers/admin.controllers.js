@@ -186,19 +186,33 @@ const addBatch = asyncHandler(async (req, res) => {
       .json(new ApiResponse(401, null, "Unauthorized access"));
   }
 
+  
   const batchInfo = req.body;
-
-  if (!batchInfo) {
+  
+  if (Object.keys(batchInfo).length === 0) {
     return res
-      .status(400) // Bad Request
-      .json(new ApiResponse(400, null, "No data provided."));
+    .status(400) // Bad Request
+    .json(new ApiResponse(400, null, "No data provided."));
   }
 
-  const user = await User.findById(batchInfo.owner_id).select("_id").lean();
-  if (!user) {
+  const batch_owner = await User
+    .findOne({username: batchInfo.username})
+    .select("_id role")
+    .lean();
+
+  
+  if (!batch_owner) {
     return res
       .status(404) // Not Found
       .json(new ApiResponse(404, null, "Owner ID doesn't exist."));
+  }
+
+  const teacher = await User
+    .findOne({username: batchInfo.teacher_username})
+    .select("_id")
+    .lean();
+  if (!teacher) {
+    return res.status(404).json(new ApiResponse(404, null, "Teacher not found."));
   }
 
   const student_usernames = batchInfo.student_ids;
@@ -209,10 +223,11 @@ const addBatch = asyncHandler(async (req, res) => {
       return user ? user._id : null; // Handle user not found
     })
   );
+  student_ids = student_ids.filter(id => id); //removing null values
 
 
   const allowedInfo = [
-    "owner_id", "owner", "teacher_id", "subject", "class", "weekly_schedule", "time", "salary", "time_to_pay", "is_continuous", "is_batch"
+    "subject", "class", "weekly_schedule", "time", "salary", "time_to_pay", "is_continuous", "is_batch"
   ];
 
   const sanitizedInfo = Object.keys(batchInfo)
@@ -223,6 +238,11 @@ const addBatch = asyncHandler(async (req, res) => {
     }, {});
 
   sanitizedInfo.student_ids = student_ids;
+  sanitizedInfo.owner_id = batch_owner._id;
+  sanitizedInfo.owner = batch_owner.role;
+  sanitizedInfo.teacher_id = teacher._id;
+
+  console.log("inside teacher add batch: ", sanitizedInfo);
 
   try {
     const batch = await Batch.create(sanitizedInfo);

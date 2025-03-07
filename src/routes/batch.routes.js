@@ -9,7 +9,8 @@ import {
   destroyBatch,
   updateBatch,
   getYourBatches,
-  askForPayment
+  askForPayment,
+  createBatch as formBatch
 } from "../controllers/batch.controllers.js";
 
 const router = Router();
@@ -23,6 +24,7 @@ router.route("/batches").get(verifyJWT, getYourBatches);
 router.route("/student/leave/:id").delete(verifyJWT, leaveBatch); //tested (student(only one))
 //teacher
 router.route("/teacher/create-batch/:post_id").post(verifyJWT, createBatch); //tested (teacher (post with 0 students))
-router.route("/teacher/ask-for-paryment/:id").post(verifyJWT, askForPayment); 
+router.route("/teacher/ask-for-payment/:id").post(verifyJWT, askForPayment);
+router.route("/create").post(verifyJWT, formBatch);
 
 export default router;
