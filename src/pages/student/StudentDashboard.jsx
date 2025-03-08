@@ -84,9 +84,9 @@ function StudentDashboard() {
                 show_accept_teacher={false}
                 acceptTeacher={null}
                 show_join_button={!doesOwnPost(post._id) && !isInPost(post.interested_students)}
-                handleJoin={(post_id)=>handleJoin(post_id, setIsLoading, setError, fetchRecommendedCourses)}
+                handleJoin={(post_id)=>handleJoin(post_id, user.role, setIsLoading, setError, fetchRecommendedCourses)}
                 show_leave_button={!doesOwnPost(post._id) && isInPost(post.interested_students)}
-                handleLeave={(post_id)=>handleLeave(post_id, setIsLoading, setError, fetchRecommendedCourses)}
+                handleLeave={(post_id)=>handleLeave(post_id, user.role, setIsLoading, setError, fetchRecommendedCourses)}
               />
             ))}
           </div>
