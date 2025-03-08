@@ -6,6 +6,7 @@ import LoadingSpinner from "../../component/LoadingSpinner";
 import ErrorMessage from "../../component/ErrorMessage";
 import { handleJoin, handleLeave } from "../../utils/batchJoin_leave";
 import getUser from "../../utils/getUser";
+import fetchData from "../../utils/fetchData";
 
 function TutorSearchPage() {
   const navigate = useNavigate();
@@ -35,46 +36,7 @@ function TutorSearchPage() {
   },[]);
 
   async function fetchTeacherPosts(path, data){
-    try {
-      setIsLoading(true);
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.get(path, {
-        params: data,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        }
-      });
-
-      setRequests(response.data.data || []);
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        try {
-          const refreshResponse = await axios.get("/api/v1/refresh-accesstoken", {
-            withCredentials: true,
-          });
-          const accessToken = refreshResponse.headers['authorization'].replace("Bearer ", "");
-          localStorage.setItem("accessToken", accessToken);
-
-          const retryResponse = await axios.get(path, {
-            params: data,
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            }
-          });
-
-          setRequests(retryResponse.data.data || []);
-        } catch (refreshError) {
-          console.error("Refresh token expired. Logging out...");
-          setError("Session expired. Please log in again.");
-          navigate("/student/posts");
-        }
-      } else {
-        console.error("Error fetching tuition requests:", error);
-        setError(error.message);
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    await fetchData(path, "/student/posts", setRequests, setIsLoading, setError, navigate);
   }
 
   const handleChange = (e) => {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const BatchCard = ({ 
   batch, 
@@ -11,7 +12,7 @@ const BatchCard = ({
   delete_student_button, handleDeleteStudent
 }) => {
   const [showStudents, setShowStudents] = useState(false);
-
+  const navigate = useNavigate();
   const toggleShowStudents = () => {
     setShowStudents(prevState => !prevState);
   };
@@ -37,8 +38,9 @@ const BatchCard = ({
     );
   };
 
+
   return (
-    <div className="bg-white overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+    <Link to={`/teacher/profile/${batch?.teacher_id?._id || "67c147c7fcd6e2926309754c"}`} className="bg-gray-100 border-2 border-emarald-800 overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
       <div className="px-6 py-5">
         <div className="flex justify-between items-start">
           <div>
@@ -105,8 +107,76 @@ const BatchCard = ({
               </span>
             )}
           </div>
+{/**showing buttons */}
+          <div className="h-[40px] border-t border-gray-100 flex justify-between gap-3">
+            {show_edit_button && (
+              <button
+                onClick={() => handleEdit(batch)}
+                className="flex-1 px-3 py-1.5 bg-indigo-600 rounded-lg text-white text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center"
+              >
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+            )}
+            
+            {show_delete_button && (
+              <button 
+                onClick={() => handleDelete(batch._id)} 
+                className="flex-1 px-3 py-1.5 bg-indigo-600  rounded-lg text-white text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center"
+              >
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            )}
+
+            {show_ask_button && (
+              <button
+                onClick={() => handleAsk(batch)}
+                className="flex-1 px-3 py-1.5 bg-indigo-600 rounded-lg text-white text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center"
+              >
+                <img width="30" height="30" src="https://img.icons8.com/ios/50/FFFFFF/receive-cash.png" alt="receive-cash"/>
+              </button>
+            )}
+
+            {show_pay_button && (
+              <button
+                onClick={() => handlePay(batch)}
+                className="flex-1 px-3 py-1.5 bg-indigo-600 border  rounded-lg text-white text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center"
+              >
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                
+              </button>
+            )}
+
+            {start_class_button && (
+              <button 
+                onClick={() => startClass(batch)} 
+                className="flex-1 px-3 py-1.5 bg-indigo-600 rounded-lg text-white text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center"
+              >
+                <img src="https://img.icons8.com/?size=100&id=AxR9eK3Gsy99&format=png&color=FFFFFF" className="h-8 w-8" />
+
+              </button>
+            )}
+
+            {join_class_button && (
+              <button 
+                onClick={() => joinClass(batch.join_class_link)} 
+                className="flex-1 px-3 py-1.5 bg-indigo-600 text-white  rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center"
+              >
+                <img src="https://img.icons8.com/?size=100&id=AxR9eK3Gsy99&format=png&color=FFFFFF" className="h-8 w-8" />
+
+              </button>
+            )}
+          </div>
         </div>
-        
+
+
+
+        {/**batch students */}
         {batch.student_ids?.length > 0 && (
           <div className="mt-5">
             <button 
@@ -156,62 +226,7 @@ const BatchCard = ({
         </div>
       )}
       
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between gap-3">
-        {show_edit_button && (
-          <button
-            onClick={() => handleEdit(batch)}
-            className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            Edit
-          </button>
-        )}
-        
-        {show_delete_button && (
-          <button 
-            onClick={() => handleDelete(batch._id)} 
-            className="flex-1 px-4 py-2 bg-white border border-red-300 rounded-lg text-red-600 font-medium hover:bg-red-50 transition-colors shadow-sm"
-          >
-            Delete
-          </button>
-        )}
-
-        {show_ask_button && (
-          <button
-            onClick={() => handleAsk(batch)}
-            className="flex-1 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 font-medium hover:bg-emerald-100 transition-colors shadow-sm"
-          >
-            Ask Pay
-          </button>
-        )}
-
-        {show_pay_button && (
-          <button
-            onClick={() => handlePay(batch)}
-            className="flex-1 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 font-medium hover:bg-emerald-100 transition-colors shadow-sm"
-          >
-            Pay
-          </button>
-        )}
-
-        {start_class_button && (
-          <button 
-            onClick={() => startClass(batch)} 
-            className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            Start Class
-          </button>
-        )}
-
-        {join_class_button && (
-          <button 
-            onClick={() => joinClass(batch.join_class_link)} 
-            className="flex-1 px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            Join Class
-          </button>
-        )}
-      </div>
-    </div>
+    </Link>
   );
 };
 

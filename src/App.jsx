@@ -30,6 +30,7 @@ import PostManagement from "./pages/admin/PostManagement";
 import BatchManagement from "./pages/admin/BatchManagement";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/PaymentFailurePage";
+import ViewTeacherProfile from "./pages/ViewTeacherProfile";
 
 const router = createBrowserRouter([
   {
@@ -116,6 +117,10 @@ const router = createBrowserRouter([
   },{
     path: "/payment/failure",
     element: <PaymentFailurePage/>
+  }
+  ,{ //viwing 
+    path: "/teacher/profile/:teacher_id",
+    element: <ViewTeacherProfile/>
   }
 ]);
 

@@ -106,9 +106,9 @@ function ViewProfilePage() {
           {/* Left Column - Profile Image */}
           <div className="md:col-span-1 flex flex-col items-center">
             <div className="w-48 h-48 rounded-full border-4 border-white shadow-lg overflow-hidden mb-6">
-              {profileData.avatar ? (
+              {profileData.coverImage ? (
                 <img
-                  src={profileData.avatar}
+                  src={profileData.coverImage}
                   alt={`${profileData.firstname} ${profileData.lastname}`}
                   className="w-full h-full object-cover"
                 />
@@ -157,15 +157,6 @@ function ViewProfilePage() {
                 </div>
               </div>
             </div>
-
-            {profileData.bio && (
-              <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-                  About Me
-                </h3>
-                <p className="text-gray-600">{profileData.bio}</p>
-              </div>
-            )}
 
             <div>
               <button

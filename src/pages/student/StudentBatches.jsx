@@ -275,7 +275,7 @@ function StudentBatches() {
           </div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
           {ownBatches.map((batch) => (
             <BatchCard
               key={batch._id}
@@ -308,7 +308,7 @@ function StudentBatches() {
         {partOfBatch && partOfBatch.length > 0 && (
           <div className="mt-12">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Batches You're Part Of</h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
               {partOfBatch.map((batch) => (
                 <BatchCard
                   key={batch._id}
