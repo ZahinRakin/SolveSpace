@@ -94,7 +94,7 @@ function TuitionRequestPage() {
       icon: <FaMoneyBillWave className="text-indigo-600" />,
       fields: [
         { label: "Class Time", name: "time", type: "time", placeholder: "" },
-        { label: "Price per Class", name: "price", type: "number", placeholder: "Amount in your local currency" },
+        { label: "Salary", name: "salary", type: "number", placeholder: "Amount in your local currency" },
       ]
     }
   ];
