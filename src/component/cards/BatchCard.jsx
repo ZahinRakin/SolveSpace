@@ -40,7 +40,7 @@ const BatchCard = ({
 
 
   return (
-    <Link to={`/teacher/profile/${batch?.teacher_id?._id || "67c147c7fcd6e2926309754c"}`} className="bg-gray-100 border-2 border-emarald-800 overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+    <div className="bg-gray-100 border-2 border-emarald-800 overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
       <div className="px-6 py-5">
         <div className="flex justify-between items-start">
           <div>
@@ -107,7 +107,10 @@ const BatchCard = ({
               </span>
             )}
           </div>
-{/**showing buttons */}
+          <Link to={`/teacher/profile/${batch?.teacher_id?._id || "67c147c7fcd6e2926309754c"}`} className="text-blue-600 hover:text-blue-800 font-semibold transition duration-300">
+            Rate & Review
+          </Link>
+          {/**showing buttons */}
           <div className="h-[40px] border-t border-gray-100 flex justify-between gap-3">
             {show_edit_button && (
               <button
@@ -226,7 +229,7 @@ const BatchCard = ({
         </div>
       )}
       
-    </Link>
+    </div>
   );
 };
 

@@ -26,7 +26,7 @@ function StudentBatches() {
     class: "",
     
     weekly_schedule: [],
-    time: "10:00 AM",
+    time: "13:00",
     salary: 0,
     time_to_pay: false,
 
