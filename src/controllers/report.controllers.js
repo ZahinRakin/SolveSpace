@@ -27,39 +27,53 @@ const getYourReports = asyncHandler(async (req, res) => {
 const createReport = asyncHandler(async (req, res) => {
   const {
     user: { _id: reporter_id, role: reporter_role },
-    body: { reportee_username, message }
+    body: { reportee_id, message }
   } = req;
 
-  if (!reportee_username.trim() || !message.trim()) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "You cannot keep username or message empty."));
-  }
+  console.log("Received report data:", { reportee_id, message, reporter_id });
 
-  const reportee = await User.findOne({ username: reportee_username }).select("_id role");
+  try {
+    if (!reportee_id || !message || !reportee_id.trim() || !message.trim()) {
+      console.log("Validation failed: Empty reportee_id or message");
+      return res.status(400).json(new ApiResponse(400, null, "You cannot keep username or message empty."));
+    }
 
-  if (!reportee) {
-    return res.status(404).json(new ApiResponse(404, null, "User not found"));
-  }
+    const reportee = await User.findById(reportee_id).select("role");
+    if (!reportee) {
+      console.log(`User with id ${reportee_id} not found`);
+      return res.status(404).json(new ApiResponse(404, null, "User not found"));
+    }
 
-  if (reportee.role === "admin") {
-    return res.status(400).json(new ApiResponse(400, null, "You cannot report the admin."));
-  }
+    if (reportee.role === "admin") {
+      console.log(`Attempted report on admin with id ${reportee_id}`);
+      return res.status(400).json(new ApiResponse(400, null, "You cannot report the admin."));
+    }
 
-  const report = await Report.create({
-    reporter_id,
-    reportee_id: reportee._id,
-    message
-  });
+    const report = await Report.create({
+      reporter_id,
+      reportee_id,
+      message
+    });
 
-  const admin = await Admin.findOne({});
-  if (admin) {
+    console.log("Report created successfully:", report);
+
+    const admin = await Admin.findOne({});
+    if (!admin) {
+      console.log("Admin not found, cannot link report.");
+      return res.status(500).json(new ApiResponse(500, null, "Admin not found"));
+    }
+
     admin.reports.push(report._id);
     await admin.save();
-  }
+    console.log("Admin reports updated successfully");
 
-  return res.status(200).json(new ApiResponse(200, report, "Your report has been submitted"));
+    return res.status(200).json(new ApiResponse(200, report, "Your report has been submitted"));
+  } catch (error) {
+    console.error("Error in creating report:", error);
+    return res.status(500).json(new ApiResponse(500, null, "An unexpected error occurred"));
+  }
 });
+
 
 const deleteReport = asyncHandler(async (req, res) => {
   const {
