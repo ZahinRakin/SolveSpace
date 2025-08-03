@@ -1,0 +1,10 @@
+color of SolveSpace website
+	top
+		R: 232
+		G: 84
+		B: 126
+	bottom
+		R: 69
+		G: 178
+		B: 246
+	
