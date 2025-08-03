@@ -1,13 +1,13 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminDashboardHeader from "./AdminDashboardHeader";
-import fetchData from "../../utils/fetchData"
+import AdminDashboardHeader from "./AdminDashboardHeader.jsx";
+import fetchData from "../../utils/fetchData.js"
 
-import PostForm from "../../component/forms/PostForm";
-import PostCard from "../../component/cards/PostCard";
-import LoadingSpinner from "../../component/LoadingSpinner";
-import ErrorMessage from "../../component/ErrorMessage";
+import PostForm from "../../component/forms/PostForm.jsx";
+import PostCard from "../../component/cards/PostCard.jsx";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
+import ErrorMessage from "../../component/ErrorMessage.jsx";
 
 function PostManagement() {
   const [posts, setPosts] = useState([]);

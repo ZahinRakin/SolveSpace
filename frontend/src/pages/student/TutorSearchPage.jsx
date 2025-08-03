@@ -1,12 +1,12 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StudentDashboardHeader from "./StudentDashboardHeader";
-import LoadingSpinner from "../../component/LoadingSpinner";
-import ErrorMessage from "../../component/ErrorMessage";
-import { handleJoin, handleLeave } from "../../utils/batchJoin_leave";
-import getUser from "../../utils/getUser";
-import fetchData from "../../utils/fetchData";
+import StudentDashboardHeader from "./StudentDashboardHeader.jsx";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
+import ErrorMessage from "../../component/ErrorMessage.jsx";
+import { handleJoin, handleLeave } from "../../utils/batchJoin_leave.js";
+import getUser from "../../utils/getUser.js";
+import fetchData from "../../utils/fetchData.js";
 
 function TutorSearchPage() {
   const navigate = useNavigate();

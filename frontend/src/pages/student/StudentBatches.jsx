@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StudentDashboardHeader from "./StudentDashboardHeader";
+import StudentDashboardHeader from "./StudentDashboardHeader.jsx";
 import ErrorMessage from "../../component/ErrorMessage.jsx";
 import LoadingSpinner from "../../component/LoadingSpinner.jsx";
 import fetchData from "../../utils/fetchData.js";

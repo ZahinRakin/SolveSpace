@@ -1,13 +1,13 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminDashboardHeader from "./AdminDashboardHeader";
-import fetchData from "../../utils/fetchData"
+import AdminDashboardHeader from "./AdminDashboardHeader.jsx";
+import fetchData from "../../utils/fetchData.js"
 
-import BatchForm from "../../component/forms/BatchForm";
-import BatchCard from "../../component/cards/BatchCard";
-import LoadingSpinner from "../../component/LoadingSpinner";
-import ErrorMessage from "../../component/ErrorMessage";
+import BatchForm from "../../component/forms/BatchForm.jsx";
+import BatchCard from "../../component/cards/BatchCard.jsx";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
+import ErrorMessage from "../../component/ErrorMessage.jsx";
 
 function BatchManagement() {
   const [batches, setBatches] = useState([]);

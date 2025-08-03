@@ -9,7 +9,7 @@ import BatchCard from "../../component/cards/BatchCard.jsx";
 import getUser from "../../utils/getUser.js";
 import BatchForm from "../../component/forms/BatchForm.jsx";
 
-function StudentBatches() {
+function TeacherBatches() {
   const [ownBatches, setOwnBatches] = useState([]);
   const [partOfBatch, setPartOfBatch] = useState([]);
   const [editableBatch, setEditableBatch] = useState(null);
@@ -460,4 +460,4 @@ function StudentBatches() {
   );
 }
 
-export default StudentBatches;
+export default TeacherBatches;

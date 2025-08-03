@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import TeacherDashboardHeader from "./TeacherDashBoardHeader";
+import TeacherDashboardHeader from "./TeacherDashboardHeader.jsx";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 

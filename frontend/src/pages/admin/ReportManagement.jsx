@@ -2,7 +2,7 @@ import React from "react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StudentDashboardHeader from "./AdminDashboardHeader";
+import StudentDashboardHeader from "./AdminDashboardHeader.jsx";
 
 function ReportManagement() {
   const [reports, setReports] = useState([]);

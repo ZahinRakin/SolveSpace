@@ -8,9 +8,9 @@ import {
   FaUsers, 
   FaClock 
 } from "react-icons/fa";
-import StudentDashboardHeader from "./StudentDashboardHeader";
-import LoadingSpinner from "../../component/LoadingSpinner";
-import ErrorMessage from "../../component/ErrorMessage";
+import StudentDashboardHeader from "./StudentDashboardHeader.jsx";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
+import ErrorMessage from "../../component/ErrorMessage.jsx";
 
 function TuitionRequestPage() {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaBook, FaCalendarAlt, FaMoneyBillWave, FaUsers, FaClock } from "react-icons/fa";
-import TeacherDashboardHeader from "./TeacherDashBoardHeader";
+import TeacherDashboardHeader from "./TeacherDashboardHeader";
 
 function TuitionPostPage() {
   const navigate = useNavigate();

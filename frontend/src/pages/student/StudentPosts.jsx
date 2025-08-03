@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import ErrorMessage from "../../component/ErrorMessage.jsx";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../component/LoadingSpinner.jsx";
-import StudentDashboardHeader from "./StudentDashboardHeader";
+import StudentDashboardHeader from "./StudentDashboardHeader.jsx";
 import PostCard from "../../component/cards/PostCard.jsx";
 import fetchData from "../../utils/fetchData.js";
 import getUser from "../../utils/getUser.js";

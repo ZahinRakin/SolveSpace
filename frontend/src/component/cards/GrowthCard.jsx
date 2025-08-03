@@ -1,5 +1,5 @@
 import React from "react";
-import GrowthItem from "../items/GrowthItem";
+import GrowthItem from "../items/GrowthItem.jsx";
 import { TrendingUp, Users, UserCheck } from "lucide-react";
 
 const GrowthCard = ({ data }) => (

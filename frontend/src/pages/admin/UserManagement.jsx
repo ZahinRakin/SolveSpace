@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import StudentDashboardHeader from "./AdminDashboardHeader";
-import fetchData from "../../utils/fetchData";
-import UserCard from "../../component/cards/userCard";
-import UserForm from "../../component/forms/UserForm";
-import LoadingSpinner from "../../component/LoadingSpinner";
-import ErrorMessage from "../../component/ErrorMessage";
+import StudentDashboardHeader from "./AdminDashboardHeader.jsx";
+import fetchData from "../../utils/fetchData.js";
+import UserCard from "../../component/cards/userCard.jsx";
+import UserForm from "../../component/forms/UserForm.jsx";
+import LoadingSpinner from "../../component/LoadingSpinner.jsx";
+import ErrorMessage from "../../component/ErrorMessage.jsx";
 
 function UserManagement() {
   const [teachers, setTeachers] = useState([]);
