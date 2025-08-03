@@ -19,10 +19,27 @@ function LoginPage() {
 
     try {
       const response = await axios.post("/api/v1/login", formData);
-      const accessToken = response.headers["authorization"].replace("Bearer ", "");
+      
+      // Try to get token from response body first (more reliable), then from headers as fallback
+      let accessToken;
+      let role;
+      
+      if (response.data.data && response.data.data.accessToken) {
+        accessToken = response.data.data.accessToken;
+        role = response.data.data.role;
+      } else if (response.headers["authorization"]) {
+        accessToken = response.headers["authorization"].replace("Bearer ", "");
+        const decoded = jwt_decode(accessToken);
+        role = decoded.role;
+      } else {
+        // If neither works, log for debugging
+        console.log("Full response:", response);
+        console.log("Response headers:", response.headers);
+        console.log("Response data:", response.data);
+        throw new Error("No access token found in response");
+      }
+      
       localStorage.setItem("accessToken", accessToken);
-
-      const { role } = jwt_decode(accessToken);
 
       const dashboardRoutes = {
         student: "/student/dashboard",
@@ -30,10 +47,12 @@ function LoginPage() {
         admin: "/admin/dashboard",
       };
 
-      console.log(dashboardRoutes[role]); //test ofc
+      console.log("Navigating to:", dashboardRoutes[role]); //test ofc
 
       navigate(dashboardRoutes[role] || "/");
     } catch (error) {
+      console.error("Login error:", error);
+      console.error("Error response:", error.response);
       setErrorMessage("Invalid username or password. Please try again.");
     }
   };

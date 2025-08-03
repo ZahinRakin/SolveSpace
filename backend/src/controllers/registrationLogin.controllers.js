@@ -161,7 +161,11 @@ const loginUser = asyncHandler(async (req, res) => {
       })
     .setHeader('Authorization', `Bearer ${accessToken}`)
     .status(200)
-    .json(new ApiResponse(200, user.username, "Login successful."));
+    .json(new ApiResponse(200, { 
+      username: user.username, 
+      accessToken: accessToken,
+      role: user.role 
+    }, "Login successful."));
 });
 
 const logoutUser = asyncHandler( async (req, res) => {

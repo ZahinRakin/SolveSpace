@@ -57,10 +57,10 @@ function NotificationPage() {
   const handleRefreshToken = async () => {
     const accessToken = localStorage.getItem("accessToken");
     try {
-      const response = await axios.get("/api/v1/refresh-accesstoken", {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const response = await axios.post("/api/v1/refresh-accesstoken", {}, {
+        withCredentials: true,
       });
-      const newAccessToken = response.data.newAccessToken;
+      const newAccessToken = response.data.data.accessToken;
       localStorage.setItem("accessToken", newAccessToken);
       await fetchNotifications(newAccessToken);
     } catch (error) {

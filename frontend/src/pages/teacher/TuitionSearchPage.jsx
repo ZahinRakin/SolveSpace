@@ -49,10 +49,10 @@ function TutorSearchPage() {
     } catch (error) {
       if (error.response && error.response.status === 401) {
         try {
-          const refreshResponse = await axios.get("/api/v1/refresh-accesstoken", {
+          const refreshResponse = await axios.post("/api/v1/refresh-accesstoken", {}, {
             withCredentials: true,
           });
-          const accessToken = refreshResponse.headers['authorization'].replace("Bearer ", "");
+          const accessToken = refreshResponse.data.data.accessToken;
           localStorage.setItem("accessToken", accessToken);
 
           const retryResponse = await axios.get(path, {
