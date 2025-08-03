@@ -7,8 +7,11 @@ export default defineConfig({
   base: '/',
   server: {
     proxy: {
-      '/api': 'http://localhost:8000'
+      '/api': 'https://solvespace-backend.onrender.com'
     }
+  },
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://solvespace-backend.onrender.com')
   }
 })
 
